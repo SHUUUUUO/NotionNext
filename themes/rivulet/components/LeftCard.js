@@ -31,7 +31,7 @@ const LeftCard = ({
   const contentRef = useRef(null)
   const menuSectionRef = useRef(null)
   const [hasSubMenuOpen, setHasSubMenuOpen] = useState(false)
-  const [announcementMaxHeight, setAnnouncementMaxHeight] = useState('8rem') // 默认 128px
+  const [announcementMaxHeight, setAnnouncementMaxHeight] = useState('12rem') // 默认 192px
   const [contentMaxHeight, setContentMaxHeight] = useState(null) // 内容区域最大高度
   const [showBottomComponents, setShowBottomComponents] = useState(true) // 是否显示下方组件（公告、站点信息）
   const [showAnnouncementTitleOnly, setShowAnnouncementTitleOnly] = useState(false) // 是否只显示公告标题
@@ -40,7 +40,7 @@ const LeftCard = ({
   const [menuMaxHeight, setMenuMaxHeight] = useState(null) // 菜单最大高度
   
   // 计算卡片样式
-  const cardGapValue = cardGap || siteConfig('CARD_GAP', null, CONFIG) || '1rem'
+  const cardGapValue = cardGap || siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'
   const cardWidth = '240px'
   const cardTop = cardGapValue
   const [cardBottomGap, setCardBottomGap] = useState('12px') // 默认底部间距12px
@@ -139,15 +139,8 @@ const LeftCard = ({
       
       // 计算各组件高度
       const announcementTitleHeight = 40 // 公告标题高度
-      const announcementFullHeight = 128 // 公告完整高度（8rem = 128px）
-      const copyrightHeight = 60 // 版权信息高度（估算，包括分隔线和间距）
+      const announcementFullHeight = 192 // 公告完整高度（12rem = 192px）
       const sectionGap = 12 // 分隔线和间距（pt-3 = 12px，已改为紧凑模式）
-      
-      // 计算不同组合所需的高度
-      const minRequiredHeightWithAll = announcementFullHeight + copyrightHeight + sectionGap * 2 // 公告完整 + 版权信息
-      const minRequiredHeightWithAnnouncementOnly = announcementFullHeight + sectionGap // 只有公告完整
-      const minRequiredHeightWithTitleOnly = announcementTitleHeight + sectionGap // 只显示公告标题
-      const minRequiredHeightWithCopyrightOnly = copyrightHeight + sectionGap // 只有版权信息
       
       // 获取页码组件位置，用于计算可用空间
       const pageNumber = document.querySelector('#page-number-area')
@@ -161,60 +154,73 @@ const LeftCard = ({
         pageNumberTop = window.innerHeight - bottomGap
       }
       
-      // 优先策略：优先隐藏版权信息，然后尝试只显示公告标题，最后隐藏公告
-      if (distanceToBottom < minRequiredHeightWithAll) {
-        // 空间不足，需要隐藏一些内容
-        if (distanceToBottom >= minRequiredHeightWithAnnouncementOnly && notice) {
-          // 可以显示完整公告，但隐藏版权信息
+      // 实际测量 SiteInfo 的高度（如果已渲染）
+      const siteInfoElement = contentRef.current?.querySelector('footer')
+      let actualCopyrightHeight = 80 // 默认估算值（增加高度）
+      if (siteInfoElement) {
+        const siteInfoRect = siteInfoElement.getBoundingClientRect()
+        actualCopyrightHeight = siteInfoRect.height + sectionGap // 包括分隔线间距
+      }
+      
+      // 计算公告所需高度
+      const announcementHeight = showAnnouncementTitleOnly ? announcementTitleHeight : announcementFullHeight
+      const announcementWithGap = notice ? (announcementHeight + sectionGap) : 0
+      
+      // 计算显示版权信息所需的总高度（包括公告和分隔线）
+      const totalHeightForCopyright = announcementWithGap + actualCopyrightHeight
+      
+      // 严格判定：如果版权信息会溢出，立即隐藏
+      const availableSpaceForCopyright = pageNumberTop - menuBottom
+      const willCopyrightOverflow = availableSpaceForCopyright < totalHeightForCopyright
+      
+      if (willCopyrightOverflow) {
+        // 版权信息会溢出，立即隐藏
+        setShowCopyright(false)
+        
+        // 检查是否可以显示公告
+        if (notice && availableSpaceForCopyright >= announcementHeight + sectionGap) {
+          // 可以显示公告
           setShowBottomComponents(true)
-          setShowAnnouncementTitleOnly(false)
-          setShowCopyright(false)
-        } else if (distanceToBottom >= minRequiredHeightWithTitleOnly && notice) {
-          // 只能显示公告标题，隐藏版权信息
-          setShowBottomComponents(true)
-          setShowAnnouncementTitleOnly(true)
-          setShowCopyright(false)
-        } else if (distanceToBottom >= minRequiredHeightWithCopyrightOnly && !notice) {
-          // 没有公告，但可以显示版权信息
+          // 如果空间只够显示标题，则只显示标题
+          if (availableSpaceForCopyright < announcementFullHeight + sectionGap) {
+            setShowAnnouncementTitleOnly(true)
+          } else {
+            setShowAnnouncementTitleOnly(false)
+          }
+        } else {
+          // 连公告都放不下，全部隐藏
           setShowBottomComponents(false)
           setShowAnnouncementTitleOnly(false)
-          setShowCopyright(true)
-        } else {
-          // 连最小内容都放不下，全部隐藏
-          setShowBottomComponents(false)
-          setShowAnnouncementTitleOnly(false)
-          setShowCopyright(false)
-        }
-        
-        // 计算菜单区域的高度和可用空间
-        const menuHeight = menuRect.height
-        const menuTop = menuRect.top
-        const bottomPadding = 16 // 底部留出 16px 的空隙
-        const availableHeight = pageNumberTop - menuTop - bottomPadding
-        
-        // 如果菜单高度超过可用空间，启用菜单内部滚动
-        // 给一个小的容差，避免因为计算误差导致不必要的滚动
-        if (menuHeight > availableHeight - 10) {
-          setEnableMenuScroll(true)
-          setMenuMaxHeight(availableHeight)
-        } else {
-          setEnableMenuScroll(false)
-          setMenuMaxHeight(null)
         }
       } else {
         // 空间充足，正常显示所有内容
-        setEnableMenuScroll(false)
         setShowBottomComponents(true)
         setShowAnnouncementTitleOnly(false)
         setShowCopyright(true)
         
         // 恢复默认高度
         if (notice) {
-          setAnnouncementMaxHeight('8rem')
+          setAnnouncementMaxHeight('12rem')
         }
       }
+      
+      // 计算菜单区域的高度和可用空间
+      const menuHeight = menuRect.height
+      const menuTop = menuRect.top
+      const bottomPadding = 16 // 底部留出 16px 的空隙
+      const availableHeight = pageNumberTop - menuTop - bottomPadding
+      
+      // 如果菜单高度超过可用空间，启用菜单内部滚动
+      // 给一个小的容差，避免因为计算误差导致不必要的滚动
+      if (menuHeight > availableHeight - 10) {
+        setEnableMenuScroll(true)
+        setMenuMaxHeight(availableHeight)
+      } else {
+        setEnableMenuScroll(false)
+        setMenuMaxHeight(null)
+      }
     })
-  }, [notice, cardGapValue, contentMaxHeight])
+  }, [notice, cardGapValue, contentMaxHeight, showAnnouncementTitleOnly])
 
   // 计算内容区域的最大高度（基于页码组件位置，类似右卡片基于功能组件位置）
   useEffect(() => {

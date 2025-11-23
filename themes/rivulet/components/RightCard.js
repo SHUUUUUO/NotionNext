@@ -355,7 +355,7 @@ const RightCard = ({
   }, [focusedSection, post, finalPosts])
 
   // 计算卡片样式
-  const cardGapValue = cardGap || siteConfig('CARD_GAP', null, CONFIG) || '1rem'
+  const cardGapValue = cardGap || siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'
   const cardWidth = '240px'
   const cardTop = cardGapValue
   const cardBottomGap = '68px' // 卡片下边缘与屏幕下边缘的最小间距

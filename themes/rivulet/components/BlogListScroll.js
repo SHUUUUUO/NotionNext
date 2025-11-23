@@ -247,7 +247,8 @@ const reorderGroupWithEmptyContainers = (actualPosts, groupCount, remainder, col
 }
 
 const BlogListScroll = ({ posts }) => {
-  const [columns, setColumns] = useState(getColumns())
+  // 初始值设为 3，避免服务器端和客户端不一致导致 hydration 错误
+  const [columns, setColumns] = useState(3)
   const { selectedTags } = useTagFilter()
   const [selectedCategory, setSelectedCategory] = useState(null)
 
@@ -304,7 +305,7 @@ const BlogListScroll = ({ posts }) => {
   const allPosts = cleanedPosts
 
   // 根据列数动态调整每组文章数量：单列时每组6张，2列时每组8张，3列时使用配置值
-  const defaultPostsPerGroup = siteConfig('RIVULET_POSTS_PER_GROUP', 7, CONFIG)
+  const defaultPostsPerGroup = siteConfig('RIVULET_POSTS_PER_GROUP', 12, CONFIG)
   const postsPerGroup = columns === 1 ? 6 : (columns === 2 ? 8 : defaultPostsPerGroup)
 
   // 将文章按指定数量一组进行分组，保持原始顺序

@@ -16,7 +16,7 @@ const PageNumber = () => {
   const [isMounted, setIsMounted] = useState(false)
 
   // 计算功能区样式（与 FunctionArea 保持一致）
-  const cardGap = siteConfig('CARD_GAP', null, CONFIG) || '1rem'
+  const cardGap = siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'
   const pageNumberHeight = '44px'
   const bottomGap = '12px' // 与窗口下边缘的间隙恒定为12px
   const pageNumberTop = `calc(100vh - ${pageNumberHeight} - ${bottomGap})`

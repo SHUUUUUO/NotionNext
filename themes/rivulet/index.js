@@ -407,7 +407,7 @@ const LayoutBase = props => {
             id='wrapper'
             className='relative flex flex-1 w-full justify-center bg-day dark:bg-night'
             style={{
-              paddingBottom: siteConfig('CARD_GAP', null, CONFIG) || '1rem'
+              paddingBottom: siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'
             }}>
             <div
               id='container-inner'
@@ -436,7 +436,7 @@ const LayoutBase = props => {
           {/* 左侧卡片 */}
           <LeftCard
             isCollapsed={isCollapsed || isFullScreenReading}
-            cardGap={siteConfig('CARD_GAP', null, CONFIG) || '1rem'}
+            cardGap={siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'}
             isFullScreenReading={isFullScreenReading}
             {...props}
           />
@@ -446,7 +446,7 @@ const LayoutBase = props => {
             post={props.post}
             notice={props.notice}
             isCollapsed={isCollapsed || isFullScreenReading}
-            cardGap={siteConfig('CARD_GAP', null, CONFIG) || '1rem'}
+            cardGap={siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'}
             tagOptions={props.tagOptions}
             currentTag={props.currentTag}
             categoryOptions={props.categoryOptions}
@@ -491,7 +491,7 @@ const LayoutIndex = props => {
  */
 const LayoutPostList = props => {
   const POST_LIST_STYLE = siteConfig('POST_LIST_STYLE')
-  const cardGap = siteConfig('CARD_GAP', null, CONFIG) || '1rem'
+  const cardGap = siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'
   const { currentTag, currentCategory, category, posts } = props
   const router = useRouter()
   

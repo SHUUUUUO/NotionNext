@@ -18,12 +18,6 @@ const CONFIG = {
   // 是否反转侧栏位置（此设置只对 rivulet 主题生效）
   LAYOUT_SIDEBAR_REVERSE: true,
 
-  // 卡片与瀑布流的间隙（单位：rem）- 与瀑布流文章卡片内部间隙保持一致
-  CARD_GAP: '0.75rem', // 卡片之间的间隙，与瀑布流 column-gap 一致
-
-  // 文章列表配置
-  RIVULET_POSTS_PER_GROUP: 12, // 每组文章数量
-
   // 社交链接配置（优先使用主题配置，如果为空则使用全局配置）
   // 格式：'数字,链接' 或直接 '链接'，有数字的按数字排序在前，没有数字的按默认顺序在后
   // 例如：'1,https://space.bilibili.com/161289723' 或 'https://github.com/yourusername'
