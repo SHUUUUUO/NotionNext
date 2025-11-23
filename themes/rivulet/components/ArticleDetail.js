@@ -4,6 +4,7 @@ import LazyImage from '@/components/LazyImage'
 import NotionIcon from '@/components/NotionIcon'
 import NotionPage from '@/components/NotionPage'
 import ShareButton from './ShareButton'
+import ArticleNavigation from './ArticleNavigation'
 import WWAds from '@/components/WWAds'
 import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
@@ -17,7 +18,7 @@ import TagItemMini from './TagItemMini'
  * @returns
  */
 export default function ArticleDetail(props) {
-  const { post } = props
+  const { post, prev, next } = props
   const { locale } = useGlobal()
 
   if (!post) {
@@ -128,8 +129,15 @@ export default function ArticleDetail(props) {
         </section>
       </article>
 
-      {/* 评论区域 - 只有在配置了评论插件时才显示 */}
-      {post?.type === 'Post' && hasCommentPlugin && (
+      {/* 上一篇、文章列表、下一篇 */}
+      {post?.type === 'Post' && (
+        <div className='my-3 -mx-3 md:-mx-12 px-3 md:px-12'>
+          <ArticleNavigation prev={prev} next={next} />
+        </div>
+      )}
+
+      {/* 评论区域 - 临时显示，参考 Cusdis 布局 */}
+      {post?.type === 'Post' && (
         <div className='bg-white dark:bg-hexo-black-gray rounded-lg px-3 md:px-12 py-6 mt-3'>
           <Comment frontMatter={post} />
         </div>

@@ -27,7 +27,6 @@ import TagItemMini from './components/TagItemMini'
 import { MenuList } from './components/MenuList'
 import CONFIG from './config'
 import { Style } from './style'
-import useNotification from '@/components/Notification'
 
 // 主题全局状态
 const ThemeGlobalRivulet = createContext()
@@ -140,52 +139,65 @@ const LayoutBase = props => {
     }
   }, [isCollapsed])
 
-  // 满屏阅读状态管理
+  // 判断是否为文章页面
+  const isArticlePage = props.post && !router.asPath?.match(/^\/(tag|category|archive|search|page)/)
+
+  // 满屏阅读状态管理（仅在文章页面生效）
   const [isFullScreenReading, setIsFullScreenReading] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && isArticlePage) {
       return localStorage.getItem('rivulet-fullscreen-reading') === 'true'
     }
     return false
   })
 
-  // 保存满屏阅读状态到本地存储
+  // 保存满屏阅读状态到本地存储（仅在文章页面）
   useEffect(() => {
-    if (isBrowser) {
+    if (isBrowser && isArticlePage) {
       localStorage.setItem('rivulet-fullscreen-reading', isFullScreenReading)
+    } else if (isBrowser && !isArticlePage) {
+      // 离开文章页面时，自动退出全屏阅读模式并呼出侧边卡片
+      if (isFullScreenReading) {
+        setIsFullScreenReading(false)
+        // 使用 requestAnimationFrame 确保状态更新后再呼出侧边卡片
+        requestAnimationFrame(() => {
+          setIsCollapse(false)
+        })
+      }
     }
-  }, [isFullScreenReading])
-
-  // 通知提示
-  const { showNotification, Notification } = useNotification()
+  }, [isFullScreenReading, isArticlePage])
 
   // 折叠侧边栏
   const toggleOpen = () => {
-    // 在满屏阅读模式下，阻止呼出卡片并显示提示
+    // 在满屏阅读模式下，阻止呼出卡片
     if (isFullScreenReading && isCollapsed) {
-      showNotification('满屏阅读模式下无法呼出左右卡片，请先退出满屏阅读模式')
       return
     }
     setIsCollapse(!isCollapsed)
   }
 
-  // 切换满屏阅读模式
+  // 切换满屏阅读模式（仅在文章页面生效）
   const toggleFullScreenReading = () => {
+    // 只在文章页面才允许切换全屏阅读模式
+    if (!isArticlePage) {
+      return
+    }
     const willEnterFullScreen = !isFullScreenReading
     setIsFullScreenReading(willEnterFullScreen)
     // 进入满屏阅读模式时自动收起侧边栏
     if (willEnterFullScreen) {
       setIsCollapse(true)
     } else {
-      // 退出满屏阅读模式时自动呼出侧边栏
-      // 使用 requestAnimationFrame 确保 CSS 类移除后再更新状态，保证动画流畅
+      // 退出满屏阅读模式时自动呼出侧边卡片
+      // 先移除 fullscreen-reading-mode 类，然后延迟呼出卡片，确保动画流畅
+      // 使用双重 requestAnimationFrame 确保 CSS 类完全移除后再更新状态
       requestAnimationFrame(() => {
-        setIsCollapse(false)
+        requestAnimationFrame(() => {
+          setIsCollapse(false)
+        })
       })
     }
   }
 
-  // 判断是否为文章页面
-  const isArticlePage = props.post && !router.asPath?.match(/^\/(tag|category|archive|search|page)/)
 
   // 自动折叠侧边栏 onResize 窗口宽度小于1366 || 滚动条滚动至页面的300px时 ; 将open设置为false
   useEffect(() => {
@@ -384,7 +396,6 @@ const LayoutBase = props => {
         </div>
 
         <AlgoliaSearchModal cRef={searchModal} {...props} />
-        <Notification />
       </div>
       </TagFilterContext.Provider>
     </ThemeGlobalRivulet.Provider>

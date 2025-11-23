@@ -306,6 +306,36 @@ const Style = () => {
         margin-right: 0 !important;
     }
 
+    /* ========== 文章导航按钮高度一致 ========== */
+    /* 确保三个导航按钮的高度遵循最高的那个按钮 */
+    .article-navigation-container {
+        align-items: stretch !important;
+        display: flex !important;
+    }
+    
+    /* 确保所有直接子元素（包括按钮和占位元素）高度一致 */
+    /* 关键：使用 align-self: stretch 确保每个子元素都拉伸到容器高度 */
+    .article-navigation-container > * {
+        align-self: stretch !important;
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* 确保宽度比例为 5:3:5 */
+    .article-navigation-container > *:first-child,
+    .article-navigation-container > *:last-child {
+        flex: 5 1 0% !important;
+    }
+    
+    .article-navigation-container > *:nth-child(2) {
+        flex: 3 1 0% !important;
+    }
+
   `}</style>
 }
 
