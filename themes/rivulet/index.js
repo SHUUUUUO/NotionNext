@@ -415,13 +415,22 @@ const LayoutPostList = props => {
     (router.asPath?.match(/\/category\/([^\/]+)/)?.[1])
   
   // 瀑布流顶部间距 - 只包含间隙，与卡片顶部平齐
+  // 注意：单独页面（文章、归档、分类、标签）使用 10px，瀑布流列表使用 cardGap
   const topMargin = cardGap // 等于 1rem (16px)，不含顶栏高度
   
   // 修改 #container-inner 的上边缘间距，使其与左右卡片顶部对齐
+  // 注意：这个只对瀑布流列表页面生效，单独页面由 CSS 控制
   useEffect(() => {
     if (isBrowser) {
       const containerInner = document.querySelector('#container-inner')
-      if (containerInner) {
+      // 检查是否是单独页面（文章、归档、分类、标签）
+      const isSinglePage = containerInner?.querySelector('#container') || 
+                          containerInner?.querySelector('#category-list') ||
+                          containerInner?.querySelector('#tags-list') ||
+                          containerInner?.querySelector('[id^="20"]')
+      
+      if (containerInner && !isSinglePage) {
+        // 只有瀑布流列表页面才设置 topMargin
         containerInner.style.paddingTop = topMargin
       }
       // 清理函数：组件卸载时恢复
@@ -450,8 +459,11 @@ const LayoutPostList = props => {
   
   const resultCount = showResultHeader && selectedTags && selectedTags.length > 0 ? filteredCount : (posts?.length || 0)
   
+  // 判断是否是分类/标签详情页（需要圆角容器）
+  const isCategoryOrTagDetailPage = currentTag || actualCategory
+
   return (
-    <>
+    <div className={isCategoryOrTagDetailPage ? 'bg-white dark:bg-hexo-black-gray rounded-lg overflow-hidden p-6' : ''}>
       {/* WWAds 放在顶部 */}
       <div className='w-full mb-0'>
         <WWAds className='w-full' orientation='horizontal' />
@@ -475,7 +487,7 @@ const LayoutPostList = props => {
       
       {/* 页码组件 - 只在瀑布流页面显示 */}
       <PageNumber />
-    </>
+    </div>
   )
 }
 
@@ -536,14 +548,14 @@ const LayoutSearch = props => {
     }
   }, [router])
   return (
-    <>
+    <div className='bg-white dark:bg-hexo-black-gray rounded-lg overflow-hidden p-6'>
       <ResultHeader 
         type="search" 
         keyword={keyword} 
         count={posts?.length || 0} 
       />
       <LayoutPostList {...props} />
-    </>
+    </div>
   )
 }
 
@@ -554,7 +566,7 @@ const LayoutArchive = props => {
   const { archivePosts } = props
   return (
     <>
-      <div className='mb-10 pb-20 bg-white md:p-12 p-3 dark:bg-gray-800 shadow-md min-h-full'>
+      <div className='mb-10 pb-20 bg-white dark:bg-hexo-black-gray md:p-12 p-3 min-h-full rounded-lg overflow-hidden'>
         {Object.keys(archivePosts).map(archiveTitle => (
           <BlogArchiveItem
             key={archiveTitle}
@@ -609,7 +621,7 @@ const LayoutCategoryIndex = props => {
   const { categoryOptions } = props
   return (
     <>
-      <div className='bg-white dark:bg-gray-700 px-10 py-10 shadow'>
+      <div className='bg-white dark:bg-hexo-black-gray px-10 py-10 rounded-lg overflow-hidden'>
         <div className='dark:text-gray-200 mb-5'>
           <i className='mr-4 fas fa-th' />
           {locale.COMMON.CATEGORY}:
@@ -648,7 +660,7 @@ const LayoutTagIndex = props => {
   const { tagOptions } = props
   return (
     <>
-      <div className='bg-white dark:bg-gray-700 px-10 py-10 shadow'>
+      <div className='bg-white dark:bg-hexo-black-gray px-10 py-10 rounded-lg overflow-hidden'>
         <div className='dark:text-gray-200 mb-5'>
           <i className='mr-4 fas fa-tag' />
           {locale.COMMON.TAGS}:

@@ -74,6 +74,8 @@ const Style = () => {
             /* 确保 wrapper 宽度正确计算，考虑左右边距 */
             width: calc(100% - 528px) !important;
             max-width: calc(100% - 528px) !important;
+            /* 确保 wrapper 顶部没有额外的 padding */
+            padding-top: 0 !important;
         }
         
         /* 确保 container-inner 填满可用空间 */
@@ -114,6 +116,8 @@ const Style = () => {
             /* 确保 wrapper 宽度正确计算，考虑左右边距 */
             width: calc(100% - 528px) !important;
             max-width: calc(100% - 528px) !important;
+            /* 确保 wrapper 顶部没有额外的 padding */
+            padding-top: 0 !important;
         }
         
         /* 确保 container-inner 填满可用空间 */
@@ -213,6 +217,48 @@ const Style = () => {
     /* 与瀑布流相同的适配方式：左右最小间距264px，容器最大宽度1024px */
     /* 注意：#container 在 #container-inner 内部，而 #wrapper 已经有 264px 的左右边距 */
     
+    /* 文章容器顶部对齐：与左右卡片顶部对齐（顶部间距 12px） */
+    /* 文章页面时，container-inner 顶部间距与左右卡片对齐 */
+    @media (min-width: 768px) {
+        /* 确保 wrapper 没有额外的 padding-top */
+        #wrapper:has(#container-inner:has(#container)) {
+            padding-top: 0 !important;
+        }
+        
+        /* 文章页面时，container-inner 顶部间距 12px */
+        #container-inner:has(#container) {
+            padding-top: 12px !important;
+            margin-top: 0 !important;
+        }
+        
+        /* 确保 container 没有额外的 margin-top */
+        #container-inner:has(#container) #container {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        /* 归档、分类、标签等子菜单页面顶部对齐（顶部间距 12px） */
+        /* 这些页面在 container-inner 中直接包含内容，需要添加顶部间距 */
+        /* 通过检查 container-inner 是否包含归档、分类、标签页面的特征元素来判断 */
+        #container-inner:has(> div.rounded-lg),
+        #container-inner:has(#category-list),
+        #container-inner:has(#tags-list),
+        #container-inner:has([id^="20"]) {
+            padding-top: 12px !important;
+        }
+        
+        /* 搜索页面、分类详情页、标签详情页也使用顶部对齐 */
+        #container-inner:has(> div.rounded-lg > div:has(#posts-wrapper)),
+        #container-inner:has(> div.rounded-lg > div:has(.grid-container)) {
+            padding-top: 12px !important;
+        }
+        
+        /* 确保归档、分类、标签页面的容器没有额外的 margin-top */
+        #container-inner > div.rounded-lg {
+            margin-top: 0 !important;
+        }
+    }
+    
     /* 大屏（≥1552px）：容器最大宽度1024px，居中显示 */
     /* 1552px = 1024px(容器) + 264px*2(左右边距) */
     @media (min-width: 1552px) {
@@ -234,11 +280,11 @@ const Style = () => {
             margin-right: 0 !important;
         }
         
-        /* 当容器宽度小于1024px时，article 的内边距按比例缩小，保持12.5%占比 */
-        /* 1024px 时 padding 是 128px (md:px-32)，占比 12.5% */
+        /* 当容器宽度小于1024px时，article 的内边距按比例缩小，保持12px占比 */
+        /* 1024px 时 padding 是 48px (md:px-12)，占比约 4.7% */
         #container > article {
-            padding-left: clamp(20px, 12.5%, 128px) !important;
-            padding-right: clamp(20px, 12.5%, 128px) !important;
+            padding-left: clamp(12px, 4.7%, 48px) !important;
+            padding-right: clamp(12px, 4.7%, 48px) !important;
         }
     }
 

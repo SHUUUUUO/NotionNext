@@ -3,7 +3,7 @@ import { AdSlot } from '@/components/GoogleAdsense'
 import LazyImage from '@/components/LazyImage'
 import NotionIcon from '@/components/NotionIcon'
 import NotionPage from '@/components/NotionPage'
-import ShareBar from '@/components/ShareBar'
+import ShareButton from './ShareButton'
 import WWAds from '@/components/WWAds'
 import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
@@ -27,9 +27,9 @@ export default function ArticleDetail(props) {
   return (
     <div
       id='container'
-      className='overflow-x-auto flex-grow w-full'>
+      className='overflow-x-auto flex-grow w-full rounded-lg overflow-hidden'>
       {post?.type && !post?.type !== 'Page' && post?.pageCover && (
-        <div className='w-full relative md:flex-shrink-0 overflow-hidden'>
+        <div className='w-full relative md:flex-shrink-0 overflow-hidden rounded-t-lg'>
           <LazyImage
             alt={post.title}
             src={post?.pageCover}
@@ -41,7 +41,9 @@ export default function ArticleDetail(props) {
       <article
         itemScope
         itemType='https://schema.org/Movie'
-        className='subpixel-antialiased overflow-y-hidden py-10 px-5 lg:pt-24 md:px-32  dark:border-gray-700 bg-white dark:bg-hexo-black-gray'>
+        className={`subpixel-antialiased overflow-y-hidden py-10 px-3 lg:pt-24 md:px-12 dark:border-gray-700 bg-white dark:bg-hexo-black-gray ${
+          post?.pageCover ? '' : 'rounded-t-lg'
+        } rounded-b-lg`}>
         <header>
           {/* 文章Title */}
           <div className='font-bold text-4xl text-black dark:text-white'>
@@ -103,8 +105,8 @@ export default function ArticleDetail(props) {
 
         <section>
           <AdSlot type='in-article' />
-          {/* 分享 */}
-          <ShareBar post={post} />
+          {/* 分享 - 简化的复制链接按钮 */}
+          <ShareButton post={post} />
         </section>
       </article>
 
