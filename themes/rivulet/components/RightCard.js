@@ -8,6 +8,7 @@ import Catalog from './Catalog'
 import GroupCategory from './GroupCategory'
 import GroupTag from './GroupTag'
 import SearchInput from './SearchInput'
+import SiteInfo from './SiteInfo'
 
 /**
  * 右侧卡片组件
@@ -204,13 +205,6 @@ const RightCard = ({
     }
   }, [post?.toc, tagOptions, categoryOptions, router.asPath, focusedSection])
 
-  // 是否显示归档链接
-  const showArchive = siteConfig('RIVULET_MENU_ARCHIVE', null, CONFIG)
-  
-  // 判断归档链接前面是否有其他功能区（用于决定是否显示分割线）
-  const hasContentBeforeArchive = (router.asPath !== '/tag' && finalTagOptions && finalTagOptions.length > 0) ||
-    (router.asPath !== '/category' && categoryOptions && categoryOptions.length > 0)
-
   // 处理功能标题点击
   const handleSectionTitleClick = (sectionName) => {
     setFocusedSection(sectionName)
@@ -272,7 +266,7 @@ const RightCard = ({
       <div 
         ref={contentRef} 
         className={`p-6 space-y-6 overflow-y-auto flex flex-col items-center text-center ${focusedSection ? 'pt-20' : ''}`}
-        style={contentMaxHeight ? { maxHeight: `${contentMaxHeight}px` } : {}}>
+        style={contentMaxHeight ? { maxHeight: `${contentMaxHeight}px` } : { maxHeight: 'none' }}>
         {/* 目录 - 仅在文章详情页显示，放在最上方 */}
         {post && post.toc && post.toc.length > 0 && (!focusedSection || focusedSection === 'catalog') && (
           <section 
@@ -346,16 +340,10 @@ const RightCard = ({
           </section>
         )}
 
-        {/* 归档链接 */}
-        {showArchive && router.asPath !== '/archive' && !focusedSection && (
-          <section className={`flex flex-col items-center w-full ${hasContentBeforeArchive ? 'pt-6 border-t border-gray-200 dark:border-gray-700' : ''}`}>
-            <SmartLink
-              href='/archive'
-              passHref
-              className='dark:text-gray-400 text-gray-500 hover:text-white hover:bg-gray-500 dark:hover:text-white text-sm w-full items-center justify-center duration-300 px-2 cursor-pointer py-1 font-light flex'>
-              <i className='fas fa-archive text-gray-400 mr-2' />
-              {locale.NAV.ARCHIVE}
-            </SmartLink>
+        {/* 版权信息 */}
+        {!focusedSection && (
+          <section className={`flex flex-col items-center w-full ${(router.asPath !== '/tag' && finalTagOptions && finalTagOptions.length > 0) || (router.asPath !== '/category' && categoryOptions && categoryOptions.length > 0) ? 'pt-6 border-t border-gray-200 dark:border-gray-700' : ''}`}>
+            <SiteInfo />
           </section>
         )}
       </div>

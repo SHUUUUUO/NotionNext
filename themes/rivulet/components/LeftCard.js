@@ -3,10 +3,10 @@ import { useState, useEffect, useRef } from 'react'
 import { siteConfig } from '@/lib/config'
 import CONFIG from '../config'
 import Announcement from './Announcement'
-import SiteInfo from './SiteInfo'
 import SocialButton from './SocialButton'
 import Logo from './Logo'
 import { MenuList } from './MenuList'
+import { isBrowser } from '@/lib/utils'
 
 /**
  * 左侧卡片组件
@@ -31,8 +31,9 @@ const LeftCard = ({
   const menuSectionRef = useRef(null)
   const [hasSubMenuOpen, setHasSubMenuOpen] = useState(false)
   const [announcementMaxHeight, setAnnouncementMaxHeight] = useState('8rem') // 默认 128px
-  const [enableScroll, setEnableScroll] = useState(false) // 是否启用滚动
+  const [contentMaxHeight, setContentMaxHeight] = useState(null) // 内容区域最大高度
   const [showBottomComponents, setShowBottomComponents] = useState(true) // 是否显示下方组件（公告、站点信息）
+  const [showAnnouncementTitleOnly, setShowAnnouncementTitleOnly] = useState(false) // 是否只显示公告标题
   const [enableMenuScroll, setEnableMenuScroll] = useState(false) // 是否启用菜单内部滚动
   const [menuMaxHeight, setMenuMaxHeight] = useState(null) // 菜单最大高度
   
@@ -41,12 +42,9 @@ const LeftCard = ({
   const cardWidth = '240px'
   const cardTop = cardGapValue
   
-  const [cardHeight, setCardHeight] = useState(null) // 卡片高度，null 表示自适应
-  
   const cardStyle = {
     top: cardTop,
     width: cardWidth,
-    height: cardHeight || 'auto',
     maxHeight: `calc(100vh - ${cardGapValue} - ${cardGapValue})`,
     left: cardGapValue
   }
@@ -88,24 +86,39 @@ const LeftCard = ({
       const siteInfoHeight = 150 // 站点信息高度（估算）
       const sectionGap = 24 // 分隔线和间距
       const minRequiredHeight = announcementTitleHeight + siteInfoHeight + sectionGap
+      const minRequiredHeightWithTitleOnly = announcementTitleHeight + sectionGap // 只显示公告标题时所需的最小高度
       
       // 计算卡片内容的总高度
       const cardContentHeight = content.scrollHeight
       const maxAllowedHeight = window.innerHeight - parseFloat(cardGapValue) * 2
       
-      // 如果内容高度超出屏幕范围，固定卡片高度并启用滚动
+      // 计算内容区域的最大高度（基于卡片的最大高度）
+      // 内容区域有上下 padding（各 24px，即 p-6）
+      const paddingTop = 24
+      const paddingBottom = 24
+      const availableHeight = maxAllowedHeight - paddingTop - paddingBottom
+      const maxHeight = Math.max(200, availableHeight) // 最小 200px
+      
+      // 如果内容超出，设置最大高度以启用滚动
       if (cardContentHeight > maxAllowedHeight) {
-        setCardHeight(`calc(100vh - ${cardGapValue} - ${cardGapValue})`)
-        setEnableScroll(true)
+        setContentMaxHeight(maxHeight)
       } else {
-        // 内容未超出，让卡片高度自适应
-        setCardHeight(null)
-        setEnableScroll(false)
+        // 内容未超出，不限制高度
+        setContentMaxHeight(null)
       }
       
-      // 如果菜单下方到屏幕底部的距离小于所需高度，隐藏下方组件
+      // 优先策略：先尝试只显示公告标题，如果还是放不下再隐藏公告
       if (distanceToBottom < minRequiredHeight) {
-        setShowBottomComponents(false)
+        // 如果距离小于完整显示所需高度，先尝试只显示公告标题
+        if (distanceToBottom >= minRequiredHeightWithTitleOnly && notice) {
+          // 可以只显示公告标题
+          setShowBottomComponents(true)
+          setShowAnnouncementTitleOnly(true)
+        } else {
+          // 连只显示标题都放不下，隐藏整个公告
+          setShowBottomComponents(false)
+          setShowAnnouncementTitleOnly(false)
+        }
         
         // 计算菜单区域的高度和可用空间
         const menuHeight = menuRect.height
@@ -123,15 +136,17 @@ const LeftCard = ({
           setMenuMaxHeight(null)
         }
         
-        // 如果公告存在，继续压缩公告区域
-        if (notice && cardContentHeight > maxAllowedHeight) {
+        // 如果公告存在且显示完整内容（不是只显示标题），继续压缩公告区域
+        if (notice && cardContentHeight > maxAllowedHeight && distanceToBottom >= minRequiredHeightWithTitleOnly) {
           const overflow = cardContentHeight - maxAllowedHeight
           const newHeight = Math.max(4, 8 - (overflow / 16))
           setAnnouncementMaxHeight(`${newHeight}rem`)
         }
       } else {
+        // 空间充足，正常显示
         setEnableMenuScroll(false)
         setShowBottomComponents(true)
+        setShowAnnouncementTitleOnly(false)
         
         // 如果未超出，恢复默认高度
         if (notice) {
@@ -154,7 +169,68 @@ const LeftCard = ({
     }
   }, [hasSubMenuOpen, notice, cardGapValue])
 
-  // 检测卡片是否超出屏幕，动态调整公告高度和启用滚动
+  // 计算内容区域的最大高度（基于卡片最大高度）
+  useEffect(() => {
+    if (!isBrowser || !cardRef.current || !contentRef.current) {
+      return
+    }
+
+    const calculateContentMaxHeight = () => {
+      if (!contentRef.current) return
+      
+      const cardGapPx = parseFloat(cardGapValue) || 16
+      const maxAllowedHeight = window.innerHeight - cardGapPx * 2
+      
+      // 内容区域有上下 padding（各 24px，即 p-6）
+      const paddingTop = 24
+      const paddingBottom = 24
+      const availableHeight = maxAllowedHeight - paddingTop - paddingBottom
+      const maxHeight = Math.max(200, availableHeight) // 最小 200px
+      
+      // 检查内容是否超出
+      const cardContentHeight = contentRef.current.scrollHeight
+      if (cardContentHeight > maxAllowedHeight) {
+        setContentMaxHeight(maxHeight)
+      } else {
+        setContentMaxHeight(null)
+      }
+    }
+
+    // 初始计算
+    calculateContentMaxHeight()
+
+    // 监听窗口大小变化和滚动
+    window.addEventListener('resize', calculateContentMaxHeight)
+    window.addEventListener('scroll', calculateContentMaxHeight)
+
+    // 使用 MutationObserver 监听内容变化
+    const observer = new MutationObserver(() => {
+      setTimeout(calculateContentMaxHeight, 100)
+    })
+
+    if (contentRef.current) {
+      observer.observe(contentRef.current, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class']
+      })
+    }
+
+    // 延迟计算，等待内容渲染完成
+    const timer = setTimeout(calculateContentMaxHeight, 100)
+    const timer2 = setTimeout(calculateContentMaxHeight, 500)
+
+    return () => {
+      window.removeEventListener('resize', calculateContentMaxHeight)
+      window.removeEventListener('scroll', calculateContentMaxHeight)
+      observer.disconnect()
+      clearTimeout(timer)
+      clearTimeout(timer2)
+    }
+  }, [isCollapsed, cardGapValue, hasSubMenuOpen, notice, showBottomComponents, showAnnouncementTitleOnly])
+
+  // 检测卡片是否超出屏幕，动态调整公告高度
   useEffect(() => {
     const checkCardHeight = () => {
       checkBottomComponentsVisibility()
@@ -198,7 +274,7 @@ const LeftCard = ({
     <aside
       ref={cardRef}
       id="sidebar-left-card"
-      className={`hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-300 ease-in-out ${cardHeight ? 'flex flex-col overflow-hidden' : ''}`}
+      className="hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-300 ease-in-out"
       style={{
         ...cardStyle,
         transform: isCollapsed ? 'translateX(-100%)' : 'translateX(0)',
@@ -207,7 +283,8 @@ const LeftCard = ({
       }}>
       <div 
         ref={contentRef}
-        className={`p-6 space-y-3 flex flex-col items-center text-center ${cardHeight ? 'flex-1 min-h-0' : ''} ${enableScroll ? 'overflow-y-auto overflow-x-hidden' : ''}`}
+        className="p-6 space-y-3 flex flex-col items-center text-center overflow-y-auto overflow-x-hidden"
+        style={contentMaxHeight ? { maxHeight: `${contentMaxHeight}px` } : undefined}
       >
         {/* 头像 */}
         {avatarUrl && (
@@ -263,17 +340,11 @@ const LeftCard = ({
 
         {/* 公告 */}
         {notice && showBottomComponents && (
-          <section className='flex flex-col items-center dark:text-gray-300 w-full border-t border-gray-200 dark:border-gray-700'>
-            <Announcement post={notice} maxHeight={announcementMaxHeight} showTitleOnly={hasSubMenuOpen} />
+          <section className='flex flex-col items-center dark:text-gray-300 w-full border-t border-gray-200 dark:border-gray-700 pb-0'>
+            <Announcement post={notice} maxHeight={announcementMaxHeight} showTitleOnly={hasSubMenuOpen || showAnnouncementTitleOnly} />
           </section>
         )}
 
-        {/* 站点信息 */}
-        {showBottomComponents && (
-          <section className={`flex flex-col items-center w-full ${notice ? 'pt-6 border-t border-gray-200 dark:border-gray-700' : ''}`}>
-            <SiteInfo />
-          </section>
-        )}
       </div>
     </aside>
   )

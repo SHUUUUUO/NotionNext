@@ -43,7 +43,7 @@ const Announcement = ({ post, className, maxHeight = '8rem', showTitleOnly = fal
   
   if (post?.blockMap) {
     return <div className={className}>
-        <section id='announcement-wrapper' className="dark:text-gray-300 rounded-xl px-2 py-4 text-center">
+        <section id='announcement-wrapper' className="dark:text-gray-300 rounded-xl px-2 pt-4 pb-2 text-center">
             <div className='flex justify-center items-center mb-3'><i className='mr-2 fas fa-bullhorn' />{locale.COMMON.ANNOUNCEMENT}</div>
             {post && !showTitleOnly && (
               <div className="relative">
