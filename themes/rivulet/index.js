@@ -17,6 +17,7 @@ import ArticleLock from './components/ArticleLock'
 import LeftCard from './components/LeftCard'
 import RightCard from './components/RightCard'
 import FunctionArea from './components/FunctionArea'
+import PageNumber from './components/PageNumber'
 import ResultHeader from './components/ResultHeader'
 import BlogListPage from './components/BlogListPage'
 import BlogListScroll from './components/BlogListScroll'
@@ -422,6 +423,9 @@ const LayoutPostList = props => {
       ) : (
         <BlogListScroll {...props} />
       )}
+      
+      {/* 页码组件 - 只在瀑布流页面显示 */}
+      <PageNumber />
     </>
   )
 }

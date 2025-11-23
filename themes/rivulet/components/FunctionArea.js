@@ -22,7 +22,8 @@ const FunctionArea = ({
   // 计算功能区样式
   const cardGap = siteConfig('CARD_GAP', null, CONFIG) || '1rem'
   const functionAreaHeight = '44px'
-  const functionAreaTop = `calc(100vh - ${functionAreaHeight} - ${cardGap})`
+  const bottomGap = '12px' // 与窗口下边缘的间隙恒定为12px
+  const functionAreaTop = `calc(100vh - ${functionAreaHeight} - ${bottomGap})`
   
   const functionAreaStyle = {
     top: functionAreaTop,

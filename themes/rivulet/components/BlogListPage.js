@@ -279,9 +279,9 @@ const BlogListPage = ({ posts = [], siteInfo }) => {
   // 直接使用清理后的文章，不添加测试文章
   const allPosts = cleanedPosts
 
-  // 根据列数动态调整每组文章数量：2列时每组8张，3列时使用配置值
+  // 根据列数动态调整每组文章数量：单列时每组6张，2列时每组8张，3列时使用配置值
   const defaultPostsPerGroup = siteConfig('RIVULET_POSTS_PER_GROUP', 7, CONFIG)
-  const postsPerGroup = columns === 2 ? 8 : defaultPostsPerGroup
+  const postsPerGroup = columns === 1 ? 6 : (columns === 2 ? 8 : defaultPostsPerGroup)
 
   // 将文章按指定数量一组进行分组，保持原始顺序
   const postGroups = useMemo(() => {
@@ -383,12 +383,27 @@ const BlogListPage = ({ posts = [], siteInfo }) => {
               
               {/* 分割线 - 最后一组不显示 */}
               {groupIndex < postGroups.length - 1 && (
-                <div className='my-8 flex items-center justify-center'>
-                  <div className='flex-grow border-t border-gray-300 dark:border-gray-600'></div>
-                  <div className='mx-4 text-gray-400 dark:text-gray-500 text-sm'>
-                    <i className='fas fa-ellipsis-h'></i>
+                <div className='my-8'>
+                  {/* 当前页页码（分割线上方） */}
+                  <div className='flex justify-center mb-2'>
+                    <span className='text-gray-400 dark:text-gray-500 text-sm font-medium'>
+                      第 {groupIndex + 1} 页
+                    </span>
                   </div>
-                  <div className='flex-grow border-t border-gray-300 dark:border-gray-600'></div>
+                  {/* 分割线 */}
+                  <div className='flex items-center justify-center'>
+                    <div className='flex-grow border-t border-gray-300 dark:border-gray-600'></div>
+                    <div className='mx-4 text-gray-400 dark:text-gray-500 text-sm'>
+                      <i className='fas fa-ellipsis-h'></i>
+                    </div>
+                    <div className='flex-grow border-t border-gray-300 dark:border-gray-600'></div>
+                  </div>
+                  {/* 下一页页码（分割线下方） */}
+                  <div className='flex justify-center mt-2'>
+                    <span className='text-gray-400 dark:text-gray-500 text-sm font-medium'>
+                      第 {groupIndex + 2} 页
+                    </span>
+                  </div>
                 </div>
               )}
             </div>

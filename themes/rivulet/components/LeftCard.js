@@ -62,12 +62,10 @@ const LeftCard = ({
     setHasSubMenuOpen(isOpen)
   }
 
-  // 检查剩余组件能否显示
+  // 检查剩余组件能否显示（只负责显示/隐藏逻辑，不负责计算高度）
   const checkBottomComponentsVisibility = () => {
-    const card = cardRef.current
-    const content = contentRef.current
     const menuSection = menuSectionRef.current
-    if (!card || !content || !menuSection) return
+    if (!menuSection) return
 
     // 等待 DOM 更新完成
     requestAnimationFrame(() => {
@@ -79,32 +77,22 @@ const LeftCard = ({
       const distanceToBottom = window.innerHeight - menuBottom
       
       // 计算公告标题高度和站点信息高度
-      // 公告标题：约 40px（包含 padding）
-      // 站点信息：约 120-150px（根据内容动态）
-      // 加上分隔线和间距，总共约 180-200px
       const announcementTitleHeight = 40 // 公告标题高度
       const siteInfoHeight = 150 // 站点信息高度（估算）
       const sectionGap = 24 // 分隔线和间距
       const minRequiredHeight = announcementTitleHeight + siteInfoHeight + sectionGap
       const minRequiredHeightWithTitleOnly = announcementTitleHeight + sectionGap // 只显示公告标题时所需的最小高度
       
-      // 计算卡片内容的总高度
-      const cardContentHeight = content.scrollHeight
-      const maxAllowedHeight = window.innerHeight - parseFloat(cardGapValue) * 2
-      
-      // 计算内容区域的最大高度（基于卡片的最大高度）
-      // 内容区域有上下 padding（各 24px，即 p-6）
-      const paddingTop = 24
-      const paddingBottom = 24
-      const availableHeight = maxAllowedHeight - paddingTop - paddingBottom
-      const maxHeight = Math.max(200, availableHeight) // 最小 200px
-      
-      // 如果内容超出，设置最大高度以启用滚动
-      if (cardContentHeight > maxAllowedHeight) {
-        setContentMaxHeight(maxHeight)
+      // 获取页码组件位置，用于计算可用空间
+      const pageNumber = document.querySelector('#page-number-area')
+      let pageNumberTop = window.innerHeight
+      if (pageNumber) {
+        const pageNumberRect = pageNumber.getBoundingClientRect()
+        pageNumberTop = pageNumberRect.top
       } else {
-        // 内容未超出，不限制高度
-        setContentMaxHeight(null)
+        // 如果页码组件不存在，卡片下边缘距离屏幕底部12px
+        const bottomGap = 12
+        pageNumberTop = window.innerHeight - bottomGap
       }
       
       // 优先策略：先尝试只显示公告标题，如果还是放不下再隐藏公告
@@ -124,7 +112,7 @@ const LeftCard = ({
         const menuHeight = menuRect.height
         const menuTop = menuRect.top
         const bottomPadding = 16 // 底部留出 16px 的空隙
-        const availableHeight = window.innerHeight - menuTop - parseFloat(cardGapValue) - bottomPadding
+        const availableHeight = pageNumberTop - menuTop - bottomPadding
         
         // 如果菜单高度超过可用空间，启用菜单内部滚动
         // 给一个小的容差，避免因为计算误差导致不必要的滚动
@@ -135,20 +123,13 @@ const LeftCard = ({
           setEnableMenuScroll(false)
           setMenuMaxHeight(null)
         }
-        
-        // 如果公告存在且显示完整内容（不是只显示标题），继续压缩公告区域
-        if (notice && cardContentHeight > maxAllowedHeight && distanceToBottom >= minRequiredHeightWithTitleOnly) {
-          const overflow = cardContentHeight - maxAllowedHeight
-          const newHeight = Math.max(4, 8 - (overflow / 16))
-          setAnnouncementMaxHeight(`${newHeight}rem`)
-        }
       } else {
         // 空间充足，正常显示
         setEnableMenuScroll(false)
         setShowBottomComponents(true)
         setShowAnnouncementTitleOnly(false)
         
-        // 如果未超出，恢复默认高度
+        // 恢复默认高度
         if (notice) {
           setAnnouncementMaxHeight('8rem')
         }
@@ -156,62 +137,69 @@ const LeftCard = ({
     })
   }
 
-  // 当菜单展开/收起状态变化时，检查剩余组件能否显示
+  // 计算内容区域的最大高度（基于页码组件位置，类似右卡片基于功能组件位置）
   useEffect(() => {
-    // 延迟检查，等待菜单展开/收起动画完成
-    const timers = [
-      setTimeout(() => checkBottomComponentsVisibility(), 200),
-      setTimeout(() => checkBottomComponentsVisibility(), 500)
-    ]
-
-    return () => {
-      timers.forEach(timer => clearTimeout(timer))
-    }
-  }, [hasSubMenuOpen, notice, cardGapValue])
-
-  // 计算内容区域的最大高度（基于卡片最大高度）
-  useEffect(() => {
-    if (!isBrowser || !cardRef.current || !contentRef.current) {
+    if (!cardRef.current || !contentRef.current) {
       return
     }
 
+    let resizeTimer = null
+    let scrollTimer = null
+
     const calculateContentMaxHeight = () => {
-      if (!contentRef.current) return
-      
-      const cardGapPx = parseFloat(cardGapValue) || 16
-      const maxAllowedHeight = window.innerHeight - cardGapPx * 2
-      
-      // 内容区域有上下 padding（各 24px，即 p-6）
-      const paddingTop = 24
-      const paddingBottom = 24
-      const availableHeight = maxAllowedHeight - paddingTop - paddingBottom
-      const maxHeight = Math.max(200, availableHeight) // 最小 200px
-      
-      // 检查内容是否超出
-      const cardContentHeight = contentRef.current.scrollHeight
-      if (cardContentHeight > maxAllowedHeight) {
-        setContentMaxHeight(maxHeight)
+      const card = cardRef.current
+      const content = contentRef.current
+      const pageNumber = document.querySelector('#page-number-area')
+
+      if (!card || !content) return
+
+      // 获取卡片的位置
+      const cardRect = card.getBoundingClientRect()
+      const cardTop = cardRect.top
+
+      // 获取页码组件的位置
+      let pageNumberTop = window.innerHeight
+      if (pageNumber) {
+        const pageNumberRect = pageNumber.getBoundingClientRect()
+        pageNumberTop = pageNumberRect.top
       } else {
-        setContentMaxHeight(null)
+        // 如果页码组件不存在，卡片下边缘距离屏幕底部12px
+        const bottomGap = 12
+        pageNumberTop = window.innerHeight - bottomGap
       }
+
+      // 计算内容区域可用的最大高度
+      // 内容区域的下边缘（包括下 padding）应该接近页码组件顶部，只保留很小间距（4px）
+      const availableHeight = pageNumberTop - cardTop - 4
+      const maxHeight = Math.max(200, availableHeight) // 最小 200px
+
+      setContentMaxHeight(maxHeight)
+    }
+
+    // 防抖处理 resize 事件
+    const handleResize = () => {
+      if (resizeTimer) clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(calculateContentMaxHeight, 100)
+    }
+
+    // 防抖处理 scroll 事件
+    const handleScroll = () => {
+      if (scrollTimer) clearTimeout(scrollTimer)
+      scrollTimer = setTimeout(calculateContentMaxHeight, 50)
     }
 
     // 初始计算
     calculateContentMaxHeight()
 
     // 监听窗口大小变化和滚动
-    window.addEventListener('resize', calculateContentMaxHeight)
-    window.addEventListener('scroll', calculateContentMaxHeight)
+    window.addEventListener('resize', handleResize)
+    window.addEventListener('scroll', handleScroll, { passive: true })
 
-    // 使用 MutationObserver 监听内容变化
-    const observer = new MutationObserver(() => {
-      setTimeout(calculateContentMaxHeight, 100)
-    })
-
-    if (contentRef.current) {
-      observer.observe(contentRef.current, {
-        childList: true,
-        subtree: true,
+    // 使用 MutationObserver 监听页码组件的变化
+    const observer = new MutationObserver(calculateContentMaxHeight)
+    const pageNumber = document.querySelector('#page-number-area')
+    if (pageNumber) {
+      observer.observe(pageNumber, {
         attributes: true,
         attributeFilter: ['style', 'class']
       })
@@ -222,53 +210,30 @@ const LeftCard = ({
     const timer2 = setTimeout(calculateContentMaxHeight, 500)
 
     return () => {
-      window.removeEventListener('resize', calculateContentMaxHeight)
-      window.removeEventListener('scroll', calculateContentMaxHeight)
+      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('scroll', handleScroll)
       observer.disconnect()
+      if (resizeTimer) clearTimeout(resizeTimer)
+      if (scrollTimer) clearTimeout(scrollTimer)
       clearTimeout(timer)
       clearTimeout(timer2)
     }
-  }, [isCollapsed, cardGapValue, hasSubMenuOpen, notice, showBottomComponents, showAnnouncementTitleOnly])
+  }, [isCollapsed])
 
-  // 检测卡片是否超出屏幕，动态调整公告高度
+  // 当菜单展开/收起或内容变化时，检查剩余组件能否显示
   useEffect(() => {
-    const checkCardHeight = () => {
-      checkBottomComponentsVisibility()
-    }
+    if (!isBrowser) return
 
-    // 初始检查
-    checkCardHeight()
-
-    // 监听窗口大小变化
-    window.addEventListener('resize', checkCardHeight)
-    
-    // 使用 MutationObserver 监听卡片内容变化
-    const observer = new MutationObserver(() => {
-      // 延迟检查，等待 DOM 更新完成
-      setTimeout(checkCardHeight, 100)
-    })
-
-    if (cardRef.current) {
-      observer.observe(cardRef.current, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['style', 'class']
-      })
-    }
-
-    // 延迟检查，等待菜单展开动画完成
+    // 延迟检查，等待菜单展开/收起动画完成
     const timers = [
-      setTimeout(checkCardHeight, 200),
-      setTimeout(checkCardHeight, 500)
+      setTimeout(() => checkBottomComponentsVisibility(), 200),
+      setTimeout(() => checkBottomComponentsVisibility(), 500)
     ]
 
     return () => {
-      window.removeEventListener('resize', checkCardHeight)
-      observer.disconnect()
       timers.forEach(timer => clearTimeout(timer))
     }
-  }, [hasSubMenuOpen, notice, cardGapValue])
+  }, [hasSubMenuOpen, notice, cardGapValue, contentMaxHeight])
 
   return (
     <aside
