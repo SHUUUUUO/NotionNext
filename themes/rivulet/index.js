@@ -27,6 +27,7 @@ import TagItemMini from './components/TagItemMini'
 import { MenuList } from './components/MenuList'
 import CONFIG from './config'
 import { Style } from './style'
+import useNotification from '@/components/Notification'
 
 // 主题全局状态
 const ThemeGlobalRivulet = createContext()
@@ -139,14 +140,56 @@ const LayoutBase = props => {
     }
   }, [isCollapsed])
 
+  // 满屏阅读状态管理
+  const [isFullScreenReading, setIsFullScreenReading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('rivulet-fullscreen-reading') === 'true'
+    }
+    return false
+  })
+
+  // 保存满屏阅读状态到本地存储
+  useEffect(() => {
+    if (isBrowser) {
+      localStorage.setItem('rivulet-fullscreen-reading', isFullScreenReading)
+    }
+  }, [isFullScreenReading])
+
+  // 通知提示
+  const { showNotification, Notification } = useNotification()
+
   // 折叠侧边栏
   const toggleOpen = () => {
+    // 在满屏阅读模式下，阻止呼出卡片并显示提示
+    if (isFullScreenReading && isCollapsed) {
+      showNotification('满屏阅读模式下无法呼出左右卡片，请先退出满屏阅读模式')
+      return
+    }
     setIsCollapse(!isCollapsed)
   }
 
+  // 切换满屏阅读模式
+  const toggleFullScreenReading = () => {
+    const willEnterFullScreen = !isFullScreenReading
+    setIsFullScreenReading(willEnterFullScreen)
+    // 进入满屏阅读模式时自动收起侧边栏
+    if (willEnterFullScreen) {
+      setIsCollapse(true)
+    } else {
+      // 退出满屏阅读模式时自动呼出侧边栏
+      // 使用 requestAnimationFrame 确保 CSS 类移除后再更新状态，保证动画流畅
+      requestAnimationFrame(() => {
+        setIsCollapse(false)
+      })
+    }
+  }
+
+  // 判断是否为文章页面
+  const isArticlePage = props.post && !router.asPath?.match(/^\/(tag|category|archive|search|page)/)
+
   // 自动折叠侧边栏 onResize 窗口宽度小于1366 || 滚动条滚动至页面的300px时 ; 将open设置为false
   useEffect(() => {
-    if (!RIVULET_SIDEBAR_COLLAPSE_ON_SCROLL) {
+    if (!RIVULET_SIDEBAR_COLLAPSE_ON_SCROLL || isFullScreenReading) {
       return
     }
     const handleResize = debounce(() => {
@@ -168,7 +211,7 @@ const LayoutBase = props => {
         window.removeEventListener('scroll', handleResize, { passive: true })
       }
     }
-  }, [props.post])
+  }, [props.post, isFullScreenReading])
 
   // 页面切换时保持滚动条可见
   useEffect(() => {
@@ -269,7 +312,7 @@ const LayoutBase = props => {
       <TagFilterContext.Provider value={{ selectedTags, toggleTag, clearSelectedTags }}>
         <div
         id='theme-fukasawa'
-        className={`${siteConfig('FONT_STYLE')} dark:bg-black scroll-smooth`}>
+        className={`${siteConfig('FONT_STYLE')} dark:bg-black scroll-smooth ${isFullScreenReading ? 'fullscreen-reading-mode' : ''}`}>
         <Style />
         {/* 页头导航，此主题只在移动端生效 */}
         <Header {...props} />
@@ -309,8 +352,9 @@ const LayoutBase = props => {
 
           {/* 左侧卡片 */}
           <LeftCard
-            isCollapsed={isCollapsed}
+            isCollapsed={isCollapsed || isFullScreenReading}
             cardGap={siteConfig('CARD_GAP', null, CONFIG) || '1rem'}
+            isFullScreenReading={isFullScreenReading}
             {...props}
           />
 
@@ -318,12 +362,13 @@ const LayoutBase = props => {
           <RightCard
             post={props.post}
             notice={props.notice}
-            isCollapsed={isCollapsed}
+            isCollapsed={isCollapsed || isFullScreenReading}
             cardGap={siteConfig('CARD_GAP', null, CONFIG) || '1rem'}
             tagOptions={props.tagOptions}
             currentTag={props.currentTag}
             categoryOptions={props.categoryOptions}
             currentCategory={props.currentCategory}
+            isFullScreenReading={isFullScreenReading}
             {...props}
           />
 
@@ -332,10 +377,14 @@ const LayoutBase = props => {
             isCollapsed={isCollapsed}
             toggleOpen={toggleOpen}
             showCollapseButton={RIVULET_SIDEBAR_COLLAPSE_BUTTON}
+            isFullScreenReading={isFullScreenReading}
+            toggleFullScreenReading={toggleFullScreenReading}
+            isArticlePage={isArticlePage}
           />
         </div>
 
         <AlgoliaSearchModal cRef={searchModal} {...props} />
+        <Notification />
       </div>
       </TagFilterContext.Provider>
     </ThemeGlobalRivulet.Provider>

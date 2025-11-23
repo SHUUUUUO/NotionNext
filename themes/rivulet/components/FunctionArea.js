@@ -12,12 +12,18 @@ import CONFIG from '../config'
  * @param {boolean} props.isCollapsed - 是否折叠
  * @param {function} props.toggleOpen - 切换折叠状态
  * @param {boolean} props.showCollapseButton - 是否显示折叠按钮
+ * @param {boolean} props.isFullScreenReading - 是否处于满屏阅读模式
+ * @param {function} props.toggleFullScreenReading - 切换满屏阅读模式
+ * @param {boolean} props.isArticlePage - 是否为文章页面
  * @returns {JSX.Element}
  */
 const FunctionArea = ({
   isCollapsed,
   toggleOpen,
-  showCollapseButton
+  showCollapseButton,
+  isFullScreenReading,
+  toggleFullScreenReading,
+  isArticlePage
 }) => {
   // 计算功能区样式
   const cardGap = siteConfig('CARD_GAP', null, CONFIG) || '1rem'
@@ -107,8 +113,22 @@ const FunctionArea = ({
               <DarkModeButton />
             </div>
 
+            {/* 满屏阅读按钮 - 只在文章页面显示 */}
+            {isArticlePage && (
+              <button
+                onClick={toggleFullScreenReading}
+                className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors duration-200 ${
+                  isFullScreenReading
+                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
+                    : 'bg-white dark:bg-transparent dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+                } dark:border-none dark:outline-none focus:outline-none`}
+                title={isFullScreenReading ? '退出满屏阅读' : '满屏阅读'}>
+                <i className={`fas ${isFullScreenReading ? 'fa-compress' : 'fa-expand'} text-lg`}></i>
+              </button>
+            )}
+
             {/* 折叠/展开卡片按钮 */}
-            {showCollapseButton && (
+            {showCollapseButton && !isFullScreenReading && (
               <button
                 onClick={toggleOpen}
                 className='flex items-center justify-center w-10 h-10 rounded-lg bg-white dark:bg-transparent dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 dark:border-none dark:outline-none focus:outline-none transition-colors duration-200'
