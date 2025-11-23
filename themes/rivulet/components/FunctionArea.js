@@ -67,7 +67,7 @@ const FunctionArea = ({
   return (
     <aside
       id="sidebar-function-area"
-      className="hidden lg:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-250 ease-linear"
+      className="hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-250 ease-linear"
       style={functionAreaStyle}>
       <div className='px-3 py-2 h-full'>
         <div className='w-full h-full flex items-center justify-center'>

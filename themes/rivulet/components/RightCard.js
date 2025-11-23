@@ -244,7 +244,7 @@ const RightCard = ({
     <aside
       ref={cardRef}
       id="sidebar-right-card"
-      className="hidden lg:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-300 ease-in-out"
+      className="hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-300 ease-in-out"
       style={{
         ...rightCardStyle,
         transform: isCollapsed ? 'translateX(100%)' : 'translateX(0)',

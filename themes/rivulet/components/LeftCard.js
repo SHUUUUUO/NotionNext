@@ -198,7 +198,7 @@ const LeftCard = ({
     <aside
       ref={cardRef}
       id="sidebar-left-card"
-      className={`hidden lg:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-300 ease-in-out ${cardHeight ? 'flex flex-col overflow-hidden' : ''}`}
+      className={`hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-300 ease-in-out ${cardHeight ? 'flex flex-col overflow-hidden' : ''}`}
       style={{
         ...cardStyle,
         transform: isCollapsed ? 'translateX(-100%)' : 'translateX(0)',

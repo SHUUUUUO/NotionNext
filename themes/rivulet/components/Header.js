@@ -18,7 +18,7 @@ const Header = props => {
   }
 
   return (
-    <div id='top-nav' className='z-40 block lg:hidden'>
+    <div id='top-nav' className='z-40 block md:hidden'>
       {/* 导航栏 */}
       <div
         id='sticky-nav'

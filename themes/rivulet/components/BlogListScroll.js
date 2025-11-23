@@ -91,11 +91,19 @@ const EmptyPlaceholder = ({ containerId, groupIndex }) => {
 
 /**
  * 计算当前屏幕的列数
+ * 考虑左右卡片（各240px）和间距（各16px），总共占用约512px
+ * 为了不遮挡内容，需要更大的屏幕宽度才能显示3列
  */
 const getColumns = () => {
   if (!isBrowser) return 3
-  if (window.innerWidth >= 1024) return 3
-  if (window.innerWidth >= 640) return 2
+  const width = window.innerWidth
+  // 在 1308px 及以上显示3列
+  if (width >= 1308) return 3
+  // 在 1024px-1307px 之间显示2列
+  if (width >= 1024) return 2
+  // 在 768px-1023px 之间显示1列（桌面端单列）
+  if (width >= 768) return 1
+  // 小于768px显示1列（移动端）
   return 1
 }
 
@@ -263,8 +271,9 @@ const BlogListScroll = ({ posts }) => {
   // 直接使用清理后的文章，不添加测试文章
   const allPosts = cleanedPosts
 
-  // 从配置读取每组文章数量
-  const postsPerGroup = siteConfig('RIVULET_POSTS_PER_GROUP', 7, CONFIG)
+  // 根据列数动态调整每组文章数量：2列时每组8张，3列时使用配置值
+  const defaultPostsPerGroup = siteConfig('RIVULET_POSTS_PER_GROUP', 7, CONFIG)
+  const postsPerGroup = columns === 2 ? 8 : defaultPostsPerGroup
 
   // 将文章按指定数量一组进行分组，保持原始顺序
   const postGroups = useMemo(() => {
@@ -274,18 +283,33 @@ const BlogListScroll = ({ posts }) => {
       groups.push(allPosts.slice(i, i + postsPerGroup))
     }
     return groups
-  }, [allPosts, postsPerGroup])
+  }, [allPosts, postsPerGroup, columns])
 
   // 监听窗口大小变化
   useEffect(() => {
     if (!isBrowser) return
     
+    // 初始化时设置列数
+    setColumns(getColumns())
+    
+    let resizeTimer = null
     const handleResize = () => {
-      setColumns(getColumns())
+      // 防抖处理，避免频繁更新
+      if (resizeTimer) {
+        clearTimeout(resizeTimer)
+      }
+      resizeTimer = setTimeout(() => {
+        setColumns(getColumns())
+      }, 100)
     }
 
     window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      if (resizeTimer) {
+        clearTimeout(resizeTimer)
+      }
+    }
   }, [])
 
   if (!allPosts || allPosts.length === 0) {
