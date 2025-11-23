@@ -251,7 +251,7 @@ const BlogListScroll = ({ posts }) => {
   const { selectedTags } = useTagFilter()
   const [selectedCategory, setSelectedCategory] = useState(null)
 
-  // 从全局获取选中的分类
+  // 从全局获取选中的分类 - 优化：移除定时器，只使用事件监听
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const checkSelectedCategory = () => {
@@ -269,12 +269,8 @@ const BlogListScroll = ({ posts }) => {
       }
       window.addEventListener('selectedCategoryUpdated', handleCategoryUpdate)
       
-      // 使用定时器定期检查（备用方案）
-      const interval = setInterval(checkSelectedCategory, 100)
-      
       return () => {
         window.removeEventListener('selectedCategoryUpdated', handleCategoryUpdate)
-        clearInterval(interval)
       }
     }
   }, [])
@@ -393,7 +389,7 @@ const BlogListScroll = ({ posts }) => {
                       className="grid-item justify-center flex"
                       style={{ breakInside: 'avoid' }}
                     >
-                      <BlogCard key={item.id} post={item} showAnimate={false}/>
+                      <BlogCard key={item.id || item.slug} post={item} showAnimate={false}/>
                     </div>
                   )
                 })}

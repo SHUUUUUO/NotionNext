@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { useEffect, useRef, useState, useMemo } from 'react'
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import SmartLink from '@/components/SmartLink'
@@ -8,234 +8,8 @@ import Catalog from './Catalog'
 import GroupCategory from './GroupCategory'
 import GroupTag from './GroupTag'
 import SearchInput from './SearchInput'
-import TagItemSelectable from './TagItemSelectable'
+import PostListFilter from './PostListFilter'
 import { useTagFilter } from '@/themes/rivulet'
-
-/**
- * 文章列表筛选面板组件 - 用于文章列表单功能模式
- * @param {object} props
- * @param {Array} props.categoryOptions - 分类选项
- * @param {string} props.currentCategory - 当前分类
- * @param {Array} props.tagOptions - 标签选项
- * @param {string} props.currentTag - 当前标签
- * @param {string} props.selectedCategory - 选中的分类（受控）
- * @param {function} props.onCategoryChange - 分类变化回调
- * @returns {JSX.Element}
- */
-const PostListFilter = ({ categoryOptions = [], currentCategory, tagOptions = [], currentTag, selectedCategory, onCategoryChange }) => {
-  const [isExpanded, setIsExpanded] = useState(false)
-  const { selectedTags, clearSelectedTags } = useTagFilter()
-  const { locale } = useGlobal()
-
-  const hasSelectedFilters = selectedTags && selectedTags.length > 0 || selectedCategory !== null
-
-  // 处理分类点击 - 不跳转，只更新筛选状态
-  const handleCategoryClick = (categoryName, e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const newCategory = selectedCategory === categoryName ? null : categoryName
-    if (onCategoryChange) {
-      onCategoryChange(newCategory)
-    }
-  }
-
-  // 清除所有筛选
-  const handleClearAll = () => {
-    clearSelectedTags()
-    if (onCategoryChange) {
-      onCategoryChange(null)
-    }
-  }
-
-  return (
-    <div className='w-full mb-3 border-b border-gray-200 dark:border-gray-700 pb-3'>
-      {/* 展开/收起按钮 */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className='w-full flex items-center justify-between py-2 px-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200'>
-        <div className='flex items-center gap-2'>
-          <i className={`fas ${isExpanded ? 'fa-chevron-down' : 'fa-filter'} text-gray-600 dark:text-gray-300 text-sm`}></i>
-          <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>筛选</span>
-          {hasSelectedFilters && (
-            <span className='bg-gray-600 dark:bg-gray-600 text-white text-xs font-bold rounded-full px-2 py-0.5'>
-              {selectedTags.length + (selectedCategory ? 1 : 0)}
-            </span>
-          )}
-        </div>
-        <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-gray-400 text-xs transition-transform duration-200`}></i>
-      </button>
-
-      {/* 展开的内容区域 */}
-      {isExpanded && (
-        <div className='mt-3 space-y-4 max-h-[40vh] overflow-y-auto'>
-          {/* 分类筛选 */}
-          {categoryOptions && categoryOptions.length > 0 && (() => {
-            // 将分类分为选中和未选中两组
-            const selectedCategoryList = categoryOptions.filter(cat => {
-              const isSelected = selectedCategory === cat.name
-              return isSelected
-            })
-            
-            const unselectedCategoryList = categoryOptions.filter(cat => {
-              return selectedCategory !== cat.name
-            })
-            
-            return (
-              <div>
-                <div className='flex items-center justify-between mb-2'>
-                  <h3 className='text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2'>
-                    <i className='fas fa-folder text-xs'></i>
-                    {locale.COMMON.CATEGORY || '分类'}
-                  </h3>
-                </div>
-                <div className='flex flex-wrap gap-2'>
-                  {/* 选中的分类 - 高亮显示在前面 */}
-                  {selectedCategoryList.length > 0 && (
-                    <div className='flex flex-wrap gap-2 mb-2 pb-2 border-b border-gray-200 dark:border-gray-700 w-full'>
-                      {/* 全部按钮 */}
-                      <button
-                        onClick={(e) => handleCategoryClick(null, e)}
-                        className={`text-xs px-2 py-1 rounded transition-colors duration-200 ${
-                          selectedCategory === null
-                            ? 'bg-gray-600 text-white dark:bg-gray-700 dark:text-white'
-                            : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-500 hover:text-white dark:hover:bg-gray-600'
-                        }`}>
-                        <i className="fas fa-list mr-1 text-xs"></i>
-                        全部
-                      </button>
-                      {selectedCategoryList.map(category => {
-                        const selected = selectedCategory === category.name
-                        return (
-                          <button
-                            key={category.name}
-                            onClick={(e) => handleCategoryClick(category.name, e)}
-                            className={`text-xs px-2 py-1 rounded transition-colors duration-200 ${
-                              selected
-                                ? 'bg-gray-600 text-white dark:bg-gray-700 dark:text-white'
-                                : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-500 hover:text-white dark:hover:bg-gray-600'
-                            }`}>
-                            <i className={`fas ${selected ? 'fa-folder-open' : 'fa-folder'} mr-1 text-xs`}></i>
-                            {category.name}
-                            {category.count && <span className="ml-1">({category.count})</span>}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
-                  {/* 未选中的分类 */}
-                  {unselectedCategoryList.length > 0 && (
-                    <div className='flex flex-wrap gap-2 w-full'>
-                      {selectedCategory === null && (
-                        <button
-                          onClick={(e) => handleCategoryClick(null, e)}
-                          className={`text-xs px-2 py-1 rounded transition-colors duration-200 ${
-                            selectedCategory === null
-                              ? 'bg-gray-600 text-white dark:bg-gray-700 dark:text-white'
-                              : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-500 hover:text-white dark:hover:bg-gray-600'
-                          }`}>
-                          <i className="fas fa-list mr-1 text-xs"></i>
-                          全部
-                        </button>
-                      )}
-                      {unselectedCategoryList.map(category => (
-                        <button
-                          key={category.name}
-                          onClick={(e) => handleCategoryClick(category.name, e)}
-                          className='text-xs px-2 py-1 rounded transition-colors duration-200 bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-500 hover:text-white dark:hover:bg-gray-600'>
-                          <i className="fas fa-folder mr-1 text-xs"></i>
-                          {category.name}
-                          {category.count && <span className="ml-1">({category.count})</span>}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })()}
-
-          {/* 标签筛选 */}
-          {tagOptions && tagOptions.length > 0 && (() => {
-            const displayTags = tagOptions.slice(0, 30) || []
-            
-            // 将标签分为选中和未选中两组
-            const selectedTagsList = displayTags.filter(tag => {
-              const isMultiSelected = selectedTags?.includes(tag.name) || false
-              const isSingleSelected = tag.name === currentTag
-              return isMultiSelected || isSingleSelected
-            })
-            
-            const unselectedTagsList = displayTags.filter(tag => {
-              const isMultiSelected = selectedTags?.includes(tag.name) || false
-              const isSingleSelected = tag.name === currentTag
-              return !isMultiSelected && !isSingleSelected
-            })
-            
-            return (
-              <div>
-                <div className='flex items-center justify-between mb-2'>
-                  <h3 className='text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2'>
-                    <i className='fas fa-tags text-xs'></i>
-                    {locale.COMMON.TAGS || '标签'}
-                  </h3>
-                {hasSelectedFilters && (
-                  <button
-                    onClick={handleClearAll}
-                    className='text-xs text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-200 flex items-center gap-1'>
-                    <i className='fas fa-times text-xs'></i>
-                    清除
-                  </button>
-                )}
-                </div>
-                {/* 选中的标签列表 - 高亮显示在前面 */}
-                {selectedTagsList.length > 0 && (
-                  <div className='flex flex-wrap gap-2 mb-2 pb-2 border-b border-gray-200 dark:border-gray-700'>
-                    {selectedTagsList.map(tag => {
-                      const isMultiSelected = selectedTags?.includes(tag.name) || false
-                      const isSingleSelected = tag.name === currentTag
-                      const isSelected = isMultiSelected || isSingleSelected
-                      return (
-                        <TagItemSelectable
-                          key={tag.name}
-                          tag={tag}
-                          selected={isSelected}
-                        />
-                      )
-                    })}
-                  </div>
-                )}
-                {/* 未选中的标签列表 */}
-                {unselectedTagsList.length > 0 && (
-                  <div className='flex flex-wrap gap-2'>
-                    {unselectedTagsList.map(tag => (
-                      <TagItemSelectable
-                        key={tag.name}
-                        tag={tag}
-                        selected={false}
-                      />
-                    ))}
-                  </div>
-                )}
-                {tagOptions.length > 30 && (
-                  <div className='text-xs text-gray-400 dark:text-gray-500 px-2 py-1 mt-2'>
-                    共 {tagOptions.length} 个标签
-                  </div>
-                )}
-              </div>
-            )
-          })()}
-
-          {/* 如果没有分类和标签 */}
-          {(!categoryOptions || categoryOptions.length === 0) && (!tagOptions || tagOptions.length === 0) && (
-            <div className='text-center text-gray-400 dark:text-gray-500 text-xs py-4'>
-              暂无分类和标签
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
 
 /**
  * 右侧卡片组件
@@ -501,8 +275,8 @@ const RightCard = ({
     }
   }, [post, finalPosts])
   
-  // 处理分类变化
-  const handleCategoryChange = (categoryName) => {
+  // 处理分类变化 - 使用 useCallback 优化
+  const handleCategoryChange = useCallback((categoryName) => {
     setSelectedCategory(categoryName)
     // 标记用户已手动修改分类筛选
     // 如果用户明确取消分类选择（传入 null），重置标志，允许后续自动同步
@@ -511,7 +285,7 @@ const RightCard = ({
     } else {
       userModifiedCategoryRef.current = true
     }
-  }
+  }, [])
   
   // 将选中的分类暴露到全局，供 BlogListPage 和 BlogListScroll 使用
   useEffect(() => {
@@ -533,8 +307,8 @@ const RightCard = ({
     }
   }, [selectedCategory])
   
-  // 滚动到当前文章并居中显示
-  const scrollToCurrentPost = (element) => {
+  // 滚动到当前文章并居中显示 - 使用 useCallback 优化
+  const scrollToCurrentPost = useCallback((element) => {
     if (!element || typeof window === 'undefined') return
     
     const container = document.getElementById('posts-list-container')
@@ -563,7 +337,7 @@ const RightCard = ({
         behavior: 'smooth'
       })
     })
-  }
+  }, [])
   
   // 当文章列表或当前文章变化时，滚动到当前文章
   useEffect(() => {
@@ -750,23 +524,23 @@ const RightCard = ({
     }
   }, [post?.toc, tagOptions, categoryOptions, router.asPath, focusedSection])
 
-  // 处理功能标题点击
-  const handleSectionTitleClick = (sectionName) => {
+  // 处理功能标题点击 - 使用 useCallback 优化
+  const handleSectionTitleClick = useCallback((sectionName) => {
     setFocusedSection(sectionName)
     // 如果提供了外部回调，也调用它
     if (onSetFocusedSection) {
       onSetFocusedSection(sectionName)
     }
-  }
+  }, [onSetFocusedSection])
 
-  // 返回正常视图
-  const handleBackToNormal = () => {
+  // 返回正常视图 - 使用 useCallback 优化
+  const handleBackToNormal = useCallback(() => {
     setFocusedSection(null)
     // 如果提供了外部回调，也调用它
     if (onSetFocusedSection) {
       onSetFocusedSection(null)
     }
-  }
+  }, [onSetFocusedSection])
 
   // 监听文章页面状态变化，离开文章页面时自动退出文章列表单功能模式
   useEffect(() => {
@@ -798,28 +572,29 @@ const RightCard = ({
     }
   }, [onSetFocusedSection, isArticlePageValue])
 
-  // 获取功能标题信息
-  const getSectionInfo = (sectionName) => {
-    const sectionMap = {
-      catalog: {
-        icon: 'fas fa-list',
-        title: locale.COMMON.TABLE_OF_CONTENTS || '目录'
-      },
-      tags: {
-        icon: 'fas fa-tags',
-        title: locale.COMMON.TAGS
-      },
-      category: {
-        icon: 'fas fa-folder',
-        title: locale.COMMON.CATEGORY
-      },
-      posts: {
-        icon: 'fas fa-list-ul',
-        title: '文章列表'
-      }
+  // 获取功能标题信息 - 使用 useMemo 优化
+  const sectionInfoMap = useMemo(() => ({
+    catalog: {
+      icon: 'fas fa-list',
+      title: locale.COMMON.TABLE_OF_CONTENTS || '目录'
+    },
+    tags: {
+      icon: 'fas fa-tags',
+      title: locale.COMMON.TAGS
+    },
+    category: {
+      icon: 'fas fa-folder',
+      title: locale.COMMON.CATEGORY
+    },
+    posts: {
+      icon: 'fas fa-list-ul',
+      title: '文章列表'
     }
-    return sectionMap[sectionName] || null
-  }
+  }), [locale])
+
+  const getSectionInfo = useCallback((sectionName) => {
+    return sectionInfoMap[sectionName] || null
+  }, [sectionInfoMap])
 
   return (
     <aside

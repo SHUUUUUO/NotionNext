@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { siteConfig } from '@/lib/config'
 import CONFIG from '../config'
 import Announcement from './Announcement'
@@ -113,18 +113,18 @@ const LeftCard = ({
   // 获取头像配置，如果为空则使用默认头像
   const avatarUrl = siteConfig('RIVULET_LEFT_CARD_AVATAR', '/avatar.png', CONFIG) || '/avatar.png'
 
-  // 点击头像返回首页
-  const handleAvatarClick = () => {
+  // 点击头像返回首页 - 使用 useCallback 优化
+  const handleAvatarClick = useCallback(() => {
     router.push('/')
-  }
+  }, [router])
 
-  // 处理子菜单展开状态变化
-  const handleSubMenuToggle = (isOpen) => {
+  // 处理子菜单展开状态变化 - 使用 useCallback 优化
+  const handleSubMenuToggle = useCallback((isOpen) => {
     setHasSubMenuOpen(isOpen)
-  }
+  }, [])
 
-  // 检查剩余组件能否显示（只负责显示/隐藏逻辑，不负责计算高度）
-  const checkBottomComponentsVisibility = () => {
+  // 检查剩余组件能否显示（只负责显示/隐藏逻辑，不负责计算高度）- 使用 useCallback 优化
+  const checkBottomComponentsVisibility = useCallback(() => {
     const menuSection = menuSectionRef.current
     if (!menuSection) return
 
@@ -214,7 +214,7 @@ const LeftCard = ({
         }
       }
     })
-  }
+  }, [notice, cardGapValue, contentMaxHeight])
 
   // 计算内容区域的最大高度（基于页码组件位置，类似右卡片基于功能组件位置）
   useEffect(() => {

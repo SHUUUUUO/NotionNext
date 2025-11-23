@@ -3,7 +3,7 @@ import { siteConfig } from '@/lib/config'
 import { isBrowser } from '@/lib/utils'
 import { throttle } from 'lodash'
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import CONFIG from '../config'
 
 /**
@@ -59,19 +59,19 @@ const FunctionArea = ({
     }
   }, [])
 
-  // 回到顶部功能
-  const scrollToTop = () => {
+  // 回到顶部功能 - 使用 useCallback 优化
+  const scrollToTop = useCallback(() => {
     if (isBrowser) {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
-  }
+  }, [])
 
-  // 回到首页功能
-  const goToHome = () => {
+  // 回到首页功能 - 使用 useCallback 优化
+  const goToHome = useCallback(() => {
     if (isBrowser) {
       router.push('/')
     }
-  }
+  }, [router])
 
   return (
     <aside

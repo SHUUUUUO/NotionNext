@@ -259,7 +259,7 @@ const BlogListPage = ({ posts = [], siteInfo }) => {
   const { selectedTags } = useTagFilter()
   const [selectedCategory, setSelectedCategory] = useState(null)
 
-  // 从全局获取选中的分类
+  // 从全局获取选中的分类 - 优化：移除定时器，只使用事件监听
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const checkSelectedCategory = () => {
@@ -277,12 +277,8 @@ const BlogListPage = ({ posts = [], siteInfo }) => {
       }
       window.addEventListener('selectedCategoryUpdated', handleCategoryUpdate)
       
-      // 使用定时器定期检查（备用方案）
-      const interval = setInterval(checkSelectedCategory, 100)
-      
       return () => {
         window.removeEventListener('selectedCategoryUpdated', handleCategoryUpdate)
-        clearInterval(interval)
       }
     }
   }, [])

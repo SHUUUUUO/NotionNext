@@ -10,7 +10,7 @@ import { isBrowser } from '@/lib/utils'
 import { Transition } from '@headlessui/react'
 import SmartLink from '@/components/SmartLink'
 import { useRouter } from 'next/router'
-import { createContext, useContext, useEffect, useRef, useState, useMemo } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { debounce } from 'lodash'
 import ArticleDetail from './components/ArticleDetail'
 import ArticleLock from './components/ArticleLock'
@@ -88,8 +88,8 @@ const LayoutBase = props => {
     }
   }, [selectedTags, isClient])
   
-  // 切换标签选中状态
-  const toggleTag = (tagName) => {
+  // 切换标签选中状态 - 使用 useCallback 优化
+  const toggleTag = useCallback((tagName) => {
     setSelectedTags(prev => {
       if (prev.includes(tagName)) {
         return prev.filter(t => t !== tagName)
@@ -97,12 +97,12 @@ const LayoutBase = props => {
         return [...prev, tagName]
       }
     })
-  }
+  }, [])
   
-  // 清除所有选中的标签
-  const clearSelectedTags = () => {
+  // 清除所有选中的标签 - 使用 useCallback 优化
+  const clearSelectedTags = useCallback(() => {
     setSelectedTags([])
-  }
+  }, [])
   
   // 侧边栏折叠状态管理
   const RIVULET_SIDEBAR_COLLAPSE_SATUS_DEFAULT =
@@ -206,8 +206,8 @@ const LayoutBase = props => {
     }
   }, [isCollapsed, isWaterfallPage, isArticlePage, isFullScreenReading])
 
-  // 折叠侧边栏
-  const toggleOpen = () => {
+  // 折叠侧边栏 - 使用 useCallback 优化
+  const toggleOpen = useCallback(() => {
     // 在瀑布流页面的全屏模式下，展开卡片时自动退出全屏模式
     if (isFullScreenReading && isCollapsed && isWaterfallPage && !isArticlePage) {
       // 先退出全屏模式
@@ -223,17 +223,17 @@ const LayoutBase = props => {
       return
     }
     setIsCollapse(!isCollapsed)
-  }
+  }, [isFullScreenReading, isCollapsed, isWaterfallPage, isArticlePage])
 
-  // 展开侧边栏（用于外部调用）
-  const expandSidebar = () => {
+  // 展开侧边栏（用于外部调用）- 使用 useCallback 优化
+  const expandSidebar = useCallback(() => {
     if (!isFullScreenReading && isCollapsed) {
       setIsCollapse(false)
     }
-  }
+  }, [isFullScreenReading, isCollapsed])
 
-  // 切换满屏阅读模式（允许在所有页面使用）
-  const toggleFullScreenReading = () => {
+  // 切换满屏阅读模式（允许在所有页面使用）- 使用 useCallback 优化
+  const toggleFullScreenReading = useCallback(() => {
     const willEnterFullScreen = !isFullScreenReading
     // 进入满屏阅读模式时先收起侧边栏，再设置全屏状态
     if (willEnterFullScreen) {
@@ -253,7 +253,7 @@ const LayoutBase = props => {
         })
       })
     }
-  }
+  }, [isFullScreenReading])
 
   // 将展开函数和全屏切换函数暴露到全局，供 ArticleNavigation 使用
   useEffect(() => {
@@ -581,8 +581,8 @@ const LayoutPostList = props => {
   
   const resultCount = showResultHeader && (selectedTags?.length > 0 || selectedCategory) ? filteredCount : (posts?.length || 0)
   
-  // 确定 ResultHeader 的类型
-  const getResultHeaderType = () => {
+  // 确定 ResultHeader 的类型 - 使用 useMemo 优化
+  const resultHeaderType = useMemo(() => {
     const hasCategoryFilter = selectedCategory && selectedCategory !== null
     const hasTagFilter = selectedTags && selectedTags.length > 0
     
@@ -603,7 +603,7 @@ const LayoutPostList = props => {
     
     // 默认：标签或分类详情页
     return currentTag ? 'tag' : 'category'
-  }
+  }, [selectedCategory, selectedTags, currentTag])
   
   // 判断是否是分类/标签详情页（需要圆角容器）
   const isCategoryOrTagDetailPage = currentTag || actualCategory
@@ -618,7 +618,7 @@ const LayoutPostList = props => {
       {/* 结果提示头部 - 标签或分类页面，或多标签筛选，或分类筛选，或复合筛选 */}
       {showResultHeader && (
         <ResultHeader 
-          type={getResultHeaderType()} 
+          type={resultHeaderType} 
           name={currentTag || actualCategory || selectedCategory} 
           count={resultCount} 
         />
