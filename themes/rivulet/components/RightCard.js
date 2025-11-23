@@ -866,12 +866,13 @@ const RightCard = ({
                 <>
                   {finalPosts.slice(0, 20).map((postItem, index) => {
                     // 判断是否为当前文章
+                    // 只在客户端使用 router.asPath，避免服务器端和客户端不一致
                     const isCurrentPost = post && (
                       postItem.slug === post.slug || 
                       postItem.id === post.id ||
                       (postItem.href && post.href && postItem.href === post.href) ||
-                      (router.asPath && postItem.href && router.asPath === postItem.href) ||
-                      (router.asPath && !postItem.href && router.asPath === `/${postItem.slug}`)
+                      (typeof window !== 'undefined' && router.asPath && postItem.href && router.asPath === postItem.href) ||
+                      (typeof window !== 'undefined' && router.asPath && !postItem.href && router.asPath === `/${postItem.slug}`)
                     )
                     const postNumber = index + 1 // 序号从1开始
                     

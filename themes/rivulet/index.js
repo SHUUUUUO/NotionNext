@@ -141,11 +141,44 @@ const LayoutBase = props => {
 
   // 判断是否为文章页面
   const isArticlePage = props.post && !router.asPath?.match(/^\/(tag|category|archive|search|page)/)
+  
+  // 判断是否为瀑布流页面（有 grid-container 的页面）
+  const [isWaterfallPage, setIsWaterfallPage] = useState(false)
+  
+  // 在客户端检测是否为瀑布流页面
+  useEffect(() => {
+    if (!isBrowser) return
+    
+    const checkWaterfallPage = () => {
+      const hasGridContainer = document.querySelector('.grid-container') !== null
+      setIsWaterfallPage(hasGridContainer)
+    }
+    
+    // 初始检测
+    checkWaterfallPage()
+    
+    // 监听路由变化
+    const handleRouteChange = () => {
+      // 延迟检测，确保 DOM 已更新
+      setTimeout(checkWaterfallPage, 100)
+    }
+    
+    router.events.on('routeChangeComplete', handleRouteChange)
+    
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange)
+    }
+  }, [router.asPath, router.events])
 
-  // 满屏阅读状态管理（仅在文章页面生效）
+  // 满屏阅读状态管理（允许在所有页面使用）
   const [isFullScreenReading, setIsFullScreenReading] = useState(() => {
-    if (typeof window !== 'undefined' && isArticlePage) {
-      return localStorage.getItem('rivulet-fullscreen-reading') === 'true'
+    if (typeof window !== 'undefined') {
+      // 文章页面从本地存储读取
+      if (isArticlePage) {
+        return localStorage.getItem('rivulet-fullscreen-reading') === 'true'
+      }
+      // 瀑布流页面默认不进入全屏，但可以通过收起卡片触发
+      return false
     }
     return false
   })
@@ -154,22 +187,39 @@ const LayoutBase = props => {
   useEffect(() => {
     if (isBrowser && isArticlePage) {
       localStorage.setItem('rivulet-fullscreen-reading', isFullScreenReading)
-    } else if (isBrowser && !isArticlePage) {
-      // 离开文章页面时，自动退出全屏阅读模式并呼出侧边卡片
-      if (isFullScreenReading) {
-        setIsFullScreenReading(false)
-        // 使用 requestAnimationFrame 确保状态更新后再呼出侧边卡片
-        requestAnimationFrame(() => {
-          setIsCollapse(false)
-        })
-      }
     }
   }, [isFullScreenReading, isArticlePage])
+  
+  // 在瀑布流页面，当卡片收起时自动进入全屏模式
+  useEffect(() => {
+    if (!isBrowser || !isWaterfallPage || isArticlePage) {
+      return
+    }
+    
+    // 如果卡片收起，自动进入全屏模式
+    if (isCollapsed && !isFullScreenReading) {
+      setIsFullScreenReading(true)
+    }
+    // 如果卡片展开，自动退出全屏模式
+    else if (!isCollapsed && isFullScreenReading) {
+      setIsFullScreenReading(false)
+    }
+  }, [isCollapsed, isWaterfallPage, isArticlePage, isFullScreenReading])
 
   // 折叠侧边栏
   const toggleOpen = () => {
-    // 在满屏阅读模式下，阻止呼出卡片
-    if (isFullScreenReading && isCollapsed) {
+    // 在瀑布流页面的全屏模式下，展开卡片时自动退出全屏模式
+    if (isFullScreenReading && isCollapsed && isWaterfallPage && !isArticlePage) {
+      // 先退出全屏模式
+      setIsFullScreenReading(false)
+      // 然后展开卡片
+      requestAnimationFrame(() => {
+        setIsCollapse(false)
+      })
+      return
+    }
+    // 在文章页面的满屏阅读模式下，阻止呼出卡片
+    if (isFullScreenReading && isCollapsed && isArticlePage) {
       return
     }
     setIsCollapse(!isCollapsed)
@@ -182,29 +232,19 @@ const LayoutBase = props => {
     }
   }
 
-  // 将展开函数暴露到全局，供 ArticleNavigation 使用
-  useEffect(() => {
-    if (isBrowser) {
-      window.__expandRightCard = expandSidebar
-      return () => {
-        delete window.__expandRightCard
-      }
-    }
-  }, [isCollapsed, isFullScreenReading])
-
-  // 切换满屏阅读模式（仅在文章页面生效）
+  // 切换满屏阅读模式（允许在所有页面使用）
   const toggleFullScreenReading = () => {
-    // 只在文章页面才允许切换全屏阅读模式
-    if (!isArticlePage) {
-      return
-    }
     const willEnterFullScreen = !isFullScreenReading
-    setIsFullScreenReading(willEnterFullScreen)
-    // 进入满屏阅读模式时自动收起侧边栏
+    // 进入满屏阅读模式时先收起侧边栏，再设置全屏状态
     if (willEnterFullScreen) {
       setIsCollapse(true)
+      // 使用 requestAnimationFrame 确保折叠状态先更新
+      requestAnimationFrame(() => {
+        setIsFullScreenReading(true)
+      })
     } else {
-      // 退出满屏阅读模式时自动呼出侧边卡片
+      // 退出满屏阅读模式时先设置状态，再呼出侧边卡片
+      setIsFullScreenReading(false)
       // 先移除 fullscreen-reading-mode 类，然后延迟呼出卡片，确保动画流畅
       // 使用双重 requestAnimationFrame 确保 CSS 类完全移除后再更新状态
       requestAnimationFrame(() => {
@@ -214,6 +254,20 @@ const LayoutBase = props => {
       })
     }
   }
+
+  // 将展开函数和全屏切换函数暴露到全局，供 ArticleNavigation 使用
+  useEffect(() => {
+    if (isBrowser) {
+      window.__expandRightCard = expandSidebar
+      window.__toggleFullScreenReading = toggleFullScreenReading
+      window.__isFullScreenReading = isFullScreenReading // 暴露全屏状态，方便检测
+      return () => {
+        delete window.__expandRightCard
+        delete window.__toggleFullScreenReading
+        delete window.__isFullScreenReading
+      }
+    }
+  }, [isCollapsed, isFullScreenReading, toggleFullScreenReading])
 
 
   // 自动折叠侧边栏 onResize 窗口宽度小于1366 || 滚动条滚动至页面的300px时 ; 将open设置为false
@@ -411,6 +465,7 @@ const LayoutBase = props => {
             isFullScreenReading={isFullScreenReading}
             toggleFullScreenReading={toggleFullScreenReading}
             isArticlePage={isArticlePage}
+            isWaterfallPage={isWaterfallPage}
           />
         </div>
 

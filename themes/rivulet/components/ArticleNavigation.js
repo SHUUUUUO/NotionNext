@@ -15,23 +15,61 @@ const ArticleNavigation = ({ prev, next, onPostListClick }) => {
     e.preventDefault()
     e.stopPropagation()
     
-    // 先展开右侧卡片（如果折叠的话）
-    if (typeof window !== 'undefined' && window.__expandRightCard) {
-      window.__expandRightCard()
-    }
+    // 检查是否在全屏模式下（使用多种方式检测，确保可靠性）
+    const isFullScreenMode = typeof window !== 'undefined' && (
+      document.documentElement.classList.contains('fullscreen-reading-mode') ||
+      document.body.classList.contains('fullscreen-reading-mode') ||
+      (window.__isFullScreenReading !== undefined && window.__isFullScreenReading)
+    )
     
-    // 延迟一下，确保卡片展开动画完成后再设置 focusedSection
-    setTimeout(() => {
-      if (onPostListClick) {
-        onPostListClick()
-      } else if (typeof window !== 'undefined' && window.__setRightCardFocusedSection) {
-        // 如果没有提供回调，尝试使用全局函数
-        window.__setRightCardFocusedSection('posts')
-      } else {
-        // 如果全局函数也不存在，尝试直接查找并操作 DOM
-        console.warn('文章列表按钮：全局函数未找到，尝试备用方案')
+    // 如果在全屏模式下，先退出全屏模式
+    if (isFullScreenMode && typeof window !== 'undefined' && window.__toggleFullScreenReading) {
+      // 调用退出全屏函数
+      window.__toggleFullScreenReading()
+      
+      // 等待全屏模式退出动画完成后再展开右侧卡片和设置 focusedSection
+      // 使用 requestAnimationFrame 确保 DOM 更新完成
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // 展开右侧卡片（如果折叠的话）
+          if (window.__expandRightCard) {
+            window.__expandRightCard()
+          }
+          
+          // 延迟一下，确保卡片展开动画完成后再设置 focusedSection
+          setTimeout(() => {
+            if (onPostListClick) {
+              onPostListClick()
+            } else if (window.__setRightCardFocusedSection) {
+              // 如果没有提供回调，尝试使用全局函数
+              window.__setRightCardFocusedSection('posts')
+            } else {
+              // 如果全局函数也不存在，尝试直接查找并操作 DOM
+              console.warn('文章列表按钮：全局函数未找到，尝试备用方案')
+            }
+          }, 200) // 增加延迟时间，确保动画完成
+        })
+      })
+    } else {
+      // 非全屏模式下的原有逻辑
+      // 先展开右侧卡片（如果折叠的话）
+      if (typeof window !== 'undefined' && window.__expandRightCard) {
+        window.__expandRightCard()
       }
-    }, 150)
+      
+      // 延迟一下，确保卡片展开动画完成后再设置 focusedSection
+      setTimeout(() => {
+        if (onPostListClick) {
+          onPostListClick()
+        } else if (typeof window !== 'undefined' && window.__setRightCardFocusedSection) {
+          // 如果没有提供回调，尝试使用全局函数
+          window.__setRightCardFocusedSection('posts')
+        } else {
+          // 如果全局函数也不存在，尝试直接查找并操作 DOM
+          console.warn('文章列表按钮：全局函数未找到，尝试备用方案')
+        }
+      }, 150)
+    }
   }
 
   return (

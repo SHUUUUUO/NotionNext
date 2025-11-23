@@ -15,6 +15,7 @@ import CONFIG from '../config'
  * @param {boolean} props.isFullScreenReading - 是否处于满屏阅读模式
  * @param {function} props.toggleFullScreenReading - 切换满屏阅读模式
  * @param {boolean} props.isArticlePage - 是否为文章页面
+ * @param {boolean} props.isWaterfallPage - 是否为瀑布流页面
  * @returns {JSX.Element}
  */
 const FunctionArea = ({
@@ -23,7 +24,8 @@ const FunctionArea = ({
   showCollapseButton,
   isFullScreenReading,
   toggleFullScreenReading,
-  isArticlePage
+  isArticlePage,
+  isWaterfallPage
 }) => {
   // 计算功能区样式
   const cardGap = siteConfig('CARD_GAP', null, CONFIG) || '1rem'
@@ -128,7 +130,8 @@ const FunctionArea = ({
             )}
 
             {/* 折叠/展开卡片按钮 */}
-            {showCollapseButton && !isFullScreenReading && (
+            {/* 在瀑布流页面的全屏模式下也显示展开按钮 */}
+            {showCollapseButton && (!isFullScreenReading || (isFullScreenReading && isWaterfallPage && !isArticlePage)) && (
               <button
                 onClick={toggleOpen}
                 className='flex items-center justify-center w-10 h-10 rounded-lg bg-white dark:bg-transparent dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 dark:border-none dark:outline-none focus:outline-none transition-colors duration-200'

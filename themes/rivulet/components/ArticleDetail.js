@@ -104,7 +104,7 @@ export default function ArticleDetail(props) {
   return (
     <div
       id='container'
-      className='overflow-x-auto flex-grow w-full rounded-lg overflow-hidden'>
+      className='flex-grow w-full rounded-lg overflow-hidden'>
       {post?.type && !post?.type !== 'Page' && post?.pageCover && (
         <div className='w-full relative md:flex-shrink-0 overflow-hidden rounded-t-lg'>
           <LazyImage

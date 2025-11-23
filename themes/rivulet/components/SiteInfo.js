@@ -1,9 +1,21 @@
 import { BeiAnGongAn } from '@/components/BeiAnGongAn'
 import { siteConfig } from '@/lib/config'
+import { useEffect, useState } from 'react'
 
 function SiteInfo({ title }) {
-  const d = new Date()
-  const currentYear = d.getFullYear()
+  const [currentYear, setCurrentYear] = useState(() => {
+    // 服务器端使用默认值，避免 hydration 错误
+    if (typeof window === 'undefined') {
+      return new Date().getFullYear()
+    }
+    return new Date().getFullYear()
+  })
+  
+  // 客户端挂载后更新年份（如果需要）
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear())
+  }, [])
+  
   const since = siteConfig('SINCE')
   const copyrightDate =
     parseInt(since) < currentYear ? since + '-' + currentYear : currentYear

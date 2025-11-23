@@ -188,9 +188,11 @@ const Style = () => {
     }
     
     .fullscreen-reading-mode #wrapper {
-        margin-left: 16px !important;
-        margin-right: 16px !important;
+        margin-left: 12px !important;
+        margin-right: 12px !important;
         justify-content: flex-start !important;
+        width: calc(100% - 24px) !important;
+        max-width: calc(100% - 24px) !important;
     }
     
     /* 满屏阅读模式下，通过 transform 和 opacity 隐藏卡片，保持动画效果 */
@@ -211,6 +213,9 @@ const Style = () => {
     .fullscreen-reading-mode #container-inner {
         max-width: 100% !important;
         width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        box-sizing: border-box !important;
     }
 
     /* ========== 文章详情页容器宽度适配 ========== */
@@ -304,6 +309,8 @@ const Style = () => {
         width: 100% !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
     }
 
     /* ========== 文章导航按钮高度一致 ========== */
