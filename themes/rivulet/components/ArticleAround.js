@@ -14,7 +14,7 @@ export default function ArticleAround ({ prev, next }) {
       <SmartLink
         href={`/${prev.slug}`}
         passHref
-        className='text-sm cursor-pointer justify-center items-center flex w-full h-full bg-white bg-opacity-40 hover:bg-hexo-black-gray dark:bg-hexo-black-gray dark:text-gray-200 hover:text-white duration-300'>
+        className='text-sm cursor-pointer justify-center items-center flex w-full h-full bg-gray-100 dark:bg-gray-800 hover:bg-hexo-black-gray dark:hover:bg-gray-700 dark:text-gray-200 hover:text-white duration-300 rounded-lg'>
 
         <i className='mr-1 fas fa-angle-double-left' />{prev.title}
 
@@ -22,7 +22,7 @@ export default function ArticleAround ({ prev, next }) {
       <SmartLink
         href={`/${next.slug}`}
         passHref
-        className='text-sm  cursor-pointer justify-center items-center flex w-full h-full bg-white bg-opacity-40 hover:bg-hexo-black-gray dark:bg-hexo-black-gray dark:text-gray-200 hover:text-white duration-300'>
+        className='text-sm  cursor-pointer justify-center items-center flex w-full h-full bg-gray-100 dark:bg-gray-800 hover:bg-hexo-black-gray dark:hover:bg-gray-700 dark:text-gray-200 hover:text-white duration-300 rounded-lg'>
         {next.title}
         <i className='ml-1 my-1 fas fa-angle-double-right' />
 

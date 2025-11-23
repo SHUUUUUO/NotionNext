@@ -9,7 +9,6 @@ import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import { formatDateFmt } from '@/lib/utils/formatDate'
 import SmartLink from '@/components/SmartLink'
-import ArticleAround from './ArticleAround'
 import TagItemMini from './TagItemMini'
 
 /**
@@ -18,12 +17,31 @@ import TagItemMini from './TagItemMini'
  * @returns
  */
 export default function ArticleDetail(props) {
-  const { post, prev, next } = props
-  const { locale, fullWidth } = useGlobal()
+  const { post } = props
+  const { locale } = useGlobal()
 
   if (!post) {
     return <></>
   }
+
+  // 检查是否配置了任何评论插件（包括 Vercel 环境变量、Notion 配置表）
+  // siteConfig 会按优先级读取：1. Notion配置表 2. 环境变量 3. blog.config.js
+  // 只有当配置值存在且不为空字符串时才认为已配置
+  const checkCommentConfig = (key) => {
+    const val = siteConfig(key)
+    return val && val !== '' && val !== 'false' && val !== '0'
+  }
+
+  const hasCommentPlugin =
+    checkCommentConfig('COMMENT_ARTALK_SERVER') ||
+    checkCommentConfig('COMMENT_TWIKOO_ENV_ID') ||
+    checkCommentConfig('COMMENT_WALINE_SERVER_URL') ||
+    checkCommentConfig('COMMENT_VALINE_APP_ID') ||
+    checkCommentConfig('COMMENT_GISCUS_REPO') ||
+    checkCommentConfig('COMMENT_CUSDIS_APP_ID') ||
+    checkCommentConfig('COMMENT_UTTERRANCES_REPO') ||
+    checkCommentConfig('COMMENT_GITALK_CLIENT_ID') ||
+    checkCommentConfig('COMMENT_WEBMENTION_ENABLE')
   return (
     <div
       id='container'
@@ -110,12 +128,12 @@ export default function ArticleDetail(props) {
         </section>
       </article>
 
-      {post?.type === 'Post' && <ArticleAround prev={prev} next={next} />}
-
-      {/* 评论互动 */}
-      <div className='duration-200 shadow py-6 px-12 w-screen md:w-full overflow-x-auto dark:border-gray-700 bg-white dark:bg-hexo-black-gray'>
-        <Comment frontMatter={post} />
-      </div>
+      {/* 评论区域 - 只有在配置了评论插件时才显示 */}
+      {post?.type === 'Post' && hasCommentPlugin && (
+        <div className='bg-white dark:bg-hexo-black-gray rounded-lg px-3 md:px-12 py-6 mt-3'>
+          <Comment frontMatter={post} />
+        </div>
+      )}
     </div>
   )
 }
