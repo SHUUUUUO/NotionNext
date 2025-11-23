@@ -77,6 +77,43 @@ const Style = () => {
         box-shadow: none;
     }
 
+    /* 左侧卡片滚动条样式 */
+    #sidebar-left-card > div::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #sidebar-left-card > div::-webkit-scrollbar-track {
+        background: transparent;
+        border-radius: 3px;
+    }
+    
+    #sidebar-left-card > div::-webkit-scrollbar-thumb {
+        background: rgba(156, 163, 175, 0.5);
+        border-radius: 3px;
+    }
+    
+    #sidebar-left-card > div::-webkit-scrollbar-thumb:hover {
+        background: rgba(156, 163, 175, 0.7);
+    }
+    
+    .dark #sidebar-left-card > div::-webkit-scrollbar-thumb {
+        background: rgba(107, 114, 128, 0.5);
+    }
+    
+    .dark #sidebar-left-card > div::-webkit-scrollbar-thumb:hover {
+        background: rgba(107, 114, 128, 0.7);
+    }
+
+    /* 公告内容滚动条隐藏 */
+    #announcement-content.scrollbar-hide {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+    }
+    
+    #announcement-content.scrollbar-hide::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
+    }
+
   `}</style>
 }
 
