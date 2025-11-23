@@ -2,7 +2,7 @@ import { useTagFilter } from '@/themes/rivulet'
 import TagItemSelectable from './TagItemSelectable'
 
 /**
- * 标签组
+ * 标签组 - 默认显示，支持多选和高亮
  * @param tags
  * @param currentTag
  * @returns {JSX.Element}

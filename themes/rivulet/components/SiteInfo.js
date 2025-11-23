@@ -9,7 +9,7 @@ function SiteInfo({ title }) {
     parseInt(since) < currentYear ? since + '-' + currentYear : currentYear
 
   return (
-    <footer className='relative leading-6 justify-center w-full text-gray-600 dark:text-gray-300 text-xs text-center'>
+    <footer className='relative leading-4 justify-center w-full text-gray-600 dark:text-gray-300 text-xs text-center'>
       <span>
         © {`${copyrightDate}`}
         <span>
@@ -17,15 +17,15 @@ function SiteInfo({ title }) {
             <i className='mx-1 animate-pulse fas fa-heart' />
             {siteConfig('AUTHOR')}
           </a>
-          . <br />
+          .
         </span>
         {siteConfig('BEI_AN') && (
           <>
+            {' '}
             <i className='fas fa-shield-alt' />
-            <a href={siteConfig('BEI_AN_LINK')} className='mr-2'>
+            <a href={siteConfig('BEI_AN_LINK')} className='ml-1 mr-2'>
               {siteConfig('BEI_AN')}
             </a>
-            <br />
           </>
         )}
         <BeiAnGongAn />
@@ -46,7 +46,6 @@ function SiteInfo({ title }) {
             NotionNext {siteConfig('VERSION')}
           </a>
         </span>
-        <br />
       </span>
       <h1>{title}</h1>
     </footer>

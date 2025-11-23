@@ -175,6 +175,23 @@ const LayoutBase = props => {
     setIsCollapse(!isCollapsed)
   }
 
+  // 展开侧边栏（用于外部调用）
+  const expandSidebar = () => {
+    if (!isFullScreenReading && isCollapsed) {
+      setIsCollapse(false)
+    }
+  }
+
+  // 将展开函数暴露到全局，供 ArticleNavigation 使用
+  useEffect(() => {
+    if (isBrowser) {
+      window.__expandRightCard = expandSidebar
+      return () => {
+        delete window.__expandRightCard
+      }
+    }
+  }, [isCollapsed, isFullScreenReading])
+
   // 切换满屏阅读模式（仅在文章页面生效）
   const toggleFullScreenReading = () => {
     // 只在文章页面才允许切换全屏阅读模式
@@ -381,6 +398,8 @@ const LayoutBase = props => {
             categoryOptions={props.categoryOptions}
             currentCategory={props.currentCategory}
             isFullScreenReading={isFullScreenReading}
+            posts={props.posts || props.allPosts || []}
+            isArticlePage={isArticlePage}
             {...props}
           />
 

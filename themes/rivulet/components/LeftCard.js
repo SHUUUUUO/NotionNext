@@ -7,6 +7,7 @@ import SocialButton from './SocialButton'
 import Logo from './Logo'
 import { MenuList } from './MenuList'
 import { isBrowser } from '@/lib/utils'
+import SiteInfo from './SiteInfo'
 
 /**
  * 左侧卡片组件
@@ -34,6 +35,7 @@ const LeftCard = ({
   const [contentMaxHeight, setContentMaxHeight] = useState(null) // 内容区域最大高度
   const [showBottomComponents, setShowBottomComponents] = useState(true) // 是否显示下方组件（公告、站点信息）
   const [showAnnouncementTitleOnly, setShowAnnouncementTitleOnly] = useState(false) // 是否只显示公告标题
+  const [showCopyright, setShowCopyright] = useState(true) // 是否显示版权信息
   const [enableMenuScroll, setEnableMenuScroll] = useState(false) // 是否启用菜单内部滚动
   const [menuMaxHeight, setMenuMaxHeight] = useState(null) // 菜单最大高度
   
@@ -41,11 +43,70 @@ const LeftCard = ({
   const cardGapValue = cardGap || siteConfig('CARD_GAP', null, CONFIG) || '1rem'
   const cardWidth = '240px'
   const cardTop = cardGapValue
+  const [cardBottomGap, setCardBottomGap] = useState('12px') // 默认底部间距12px
+  
+  // 检测页码组件是否存在，动态调整底部间距
+  useEffect(() => {
+    if (!isBrowser) return
+
+    const updateBottomGap = () => {
+      const pageNumber = document.querySelector('#page-number-area')
+      // 如果页码组件存在且可见，底部间距为68px，否则为12px
+      if (pageNumber) {
+        const rect = pageNumber.getBoundingClientRect()
+        const isVisible = rect.width > 0 && rect.height > 0 && 
+                         window.getComputedStyle(pageNumber).display !== 'none' &&
+                         window.getComputedStyle(pageNumber).visibility !== 'hidden'
+        setCardBottomGap(isVisible ? '68px' : '12px')
+      } else {
+        setCardBottomGap('12px')
+      }
+    }
+
+    // 初始计算
+    updateBottomGap()
+
+    // 监听窗口大小变化和滚动
+    window.addEventListener('resize', updateBottomGap)
+    window.addEventListener('scroll', updateBottomGap, { passive: true })
+
+    // 使用 MutationObserver 监听页码组件的变化
+    const observer = new MutationObserver(updateBottomGap)
+    const pageNumber = document.querySelector('#page-number-area')
+    if (pageNumber) {
+      observer.observe(pageNumber, {
+        attributes: true,
+        attributeFilter: ['style', 'class'],
+        childList: true,
+        subtree: true
+      })
+    }
+
+    // 监听整个文档的变化，以便检测页码组件的出现/消失
+    const documentObserver = new MutationObserver(updateBottomGap)
+    documentObserver.observe(document.body, {
+      childList: true,
+      subtree: true
+    })
+
+    // 延迟计算，等待内容渲染完成
+    const timer = setTimeout(updateBottomGap, 100)
+    const timer2 = setTimeout(updateBottomGap, 500)
+
+    return () => {
+      window.removeEventListener('resize', updateBottomGap)
+      window.removeEventListener('scroll', updateBottomGap)
+      observer.disconnect()
+      documentObserver.disconnect()
+      clearTimeout(timer)
+      clearTimeout(timer2)
+    }
+  }, [router.asPath]) // 路由变化时重新检测
   
   const cardStyle = {
     top: cardTop,
     width: cardWidth,
-    maxHeight: `calc(100vh - ${cardGapValue} - ${cardGapValue})`,
+    maxHeight: `calc(100vh - ${cardGapValue} - ${cardBottomGap})`,
     left: cardGapValue
   }
 
@@ -76,12 +137,17 @@ const LeftCard = ({
       // 计算菜单底部到屏幕底部的距离
       const distanceToBottom = window.innerHeight - menuBottom
       
-      // 计算公告标题高度和站点信息高度
+      // 计算各组件高度
       const announcementTitleHeight = 40 // 公告标题高度
-      const siteInfoHeight = 150 // 站点信息高度（估算）
-      const sectionGap = 24 // 分隔线和间距
-      const minRequiredHeight = announcementTitleHeight + siteInfoHeight + sectionGap
-      const minRequiredHeightWithTitleOnly = announcementTitleHeight + sectionGap // 只显示公告标题时所需的最小高度
+      const announcementFullHeight = 128 // 公告完整高度（8rem = 128px）
+      const copyrightHeight = 60 // 版权信息高度（估算，包括分隔线和间距）
+      const sectionGap = 12 // 分隔线和间距（pt-3 = 12px，已改为紧凑模式）
+      
+      // 计算不同组合所需的高度
+      const minRequiredHeightWithAll = announcementFullHeight + copyrightHeight + sectionGap * 2 // 公告完整 + 版权信息
+      const minRequiredHeightWithAnnouncementOnly = announcementFullHeight + sectionGap // 只有公告完整
+      const minRequiredHeightWithTitleOnly = announcementTitleHeight + sectionGap // 只显示公告标题
+      const minRequiredHeightWithCopyrightOnly = copyrightHeight + sectionGap // 只有版权信息
       
       // 获取页码组件位置，用于计算可用空间
       const pageNumber = document.querySelector('#page-number-area')
@@ -95,17 +161,29 @@ const LeftCard = ({
         pageNumberTop = window.innerHeight - bottomGap
       }
       
-      // 优先策略：先尝试只显示公告标题，如果还是放不下再隐藏公告
-      if (distanceToBottom < minRequiredHeight) {
-        // 如果距离小于完整显示所需高度，先尝试只显示公告标题
-        if (distanceToBottom >= minRequiredHeightWithTitleOnly && notice) {
-          // 可以只显示公告标题
+      // 优先策略：优先隐藏版权信息，然后尝试只显示公告标题，最后隐藏公告
+      if (distanceToBottom < minRequiredHeightWithAll) {
+        // 空间不足，需要隐藏一些内容
+        if (distanceToBottom >= minRequiredHeightWithAnnouncementOnly && notice) {
+          // 可以显示完整公告，但隐藏版权信息
+          setShowBottomComponents(true)
+          setShowAnnouncementTitleOnly(false)
+          setShowCopyright(false)
+        } else if (distanceToBottom >= minRequiredHeightWithTitleOnly && notice) {
+          // 只能显示公告标题，隐藏版权信息
           setShowBottomComponents(true)
           setShowAnnouncementTitleOnly(true)
-        } else {
-          // 连只显示标题都放不下，隐藏整个公告
+          setShowCopyright(false)
+        } else if (distanceToBottom >= minRequiredHeightWithCopyrightOnly && !notice) {
+          // 没有公告，但可以显示版权信息
           setShowBottomComponents(false)
           setShowAnnouncementTitleOnly(false)
+          setShowCopyright(true)
+        } else {
+          // 连最小内容都放不下，全部隐藏
+          setShowBottomComponents(false)
+          setShowAnnouncementTitleOnly(false)
+          setShowCopyright(false)
         }
         
         // 计算菜单区域的高度和可用空间
@@ -124,10 +202,11 @@ const LeftCard = ({
           setMenuMaxHeight(null)
         }
       } else {
-        // 空间充足，正常显示
+        // 空间充足，正常显示所有内容
         setEnableMenuScroll(false)
         setShowBottomComponents(true)
         setShowAnnouncementTitleOnly(false)
+        setShowCopyright(true)
         
         // 恢复默认高度
         if (notice) {
@@ -307,6 +386,13 @@ const LeftCard = ({
         {notice && showBottomComponents && (
           <section className='flex flex-col items-center dark:text-gray-300 w-full border-t border-gray-200 dark:border-gray-700 pb-0'>
             <Announcement post={notice} maxHeight={announcementMaxHeight} showTitleOnly={hasSubMenuOpen || showAnnouncementTitleOnly} />
+          </section>
+        )}
+
+        {/* 版权信息 */}
+        {showCopyright && (
+          <section className='flex flex-col items-center w-full pt-3 border-t border-gray-200 dark:border-gray-700'>
+            <SiteInfo />
           </section>
         )}
 

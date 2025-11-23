@@ -60,10 +60,11 @@ const Catalog = ({ toc, maxHeight = 400 }) => {
     return <></>
   }
   return (
-    <div id='catalog' className='flex flex-col overflow-hidden w-full h-full' style={{ maxHeight: `${maxHeight}px` }}>
+    <div id='catalog' className='flex flex-col overflow-hidden w-full' style={{ maxHeight: `${maxHeight}px`, height: '100%' }}>
       <nav
         ref={tRef}
-        className='flex-1 overflow-y-auto overscroll-none scroll-hidden text-black min-h-0 text-left'>
+        className='flex-1 overflow-y-auto overscroll-none scroll-hidden text-black min-h-0 text-left'
+        style={{ maxHeight: `${maxHeight}px` }}>
         {toc.map(tocItem => {
           const id = uuidToId(tocItem.id)
           return (

@@ -43,8 +43,8 @@ const Announcement = ({ post, className, maxHeight = '8rem', showTitleOnly = fal
   
   if (post?.blockMap) {
     return <div className={className}>
-        <section id='announcement-wrapper' className="dark:text-gray-300 rounded-xl px-2 pt-4 pb-2 text-center">
-            <div className='flex justify-center items-center mb-3'><i className='mr-2 fas fa-bullhorn' />{locale.COMMON.ANNOUNCEMENT}</div>
+        <section id='announcement-wrapper' className="dark:text-gray-300 rounded-xl px-2 pt-4 pb-2 text-center w-auto mx-auto inline-block">
+            <div className='flex justify-center items-center mb-3 gap-2'><i className='fas fa-bullhorn' />{locale.COMMON.ANNOUNCEMENT}</div>
             {post && !showTitleOnly && (
               <div className="relative">
                 <div 
@@ -54,7 +54,7 @@ const Announcement = ({ post, className, maxHeight = '8rem', showTitleOnly = fal
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
                 >
-                  <div className="text-center">
+                  <div className="text-center px-2">
                     <NotionPage post={post} className='text-center' />
                   </div>
                   {!isHovered && (

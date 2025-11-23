@@ -11,6 +11,7 @@ import { useGlobal } from '@/lib/global'
 import { formatDateFmt } from '@/lib/utils/formatDate'
 import SmartLink from '@/components/SmartLink'
 import TagItemMini from './TagItemMini'
+import { useState, useEffect } from 'react'
 
 /**
  *
@@ -20,6 +21,63 @@ import TagItemMini from './TagItemMini'
 export default function ArticleDetail(props) {
   const { post, prev, next } = props
   const { locale } = useGlobal()
+  const [filteredPrev, setFilteredPrev] = useState(null)
+  const [filteredNext, setFilteredNext] = useState(null)
+
+  // 获取筛选后的 prev 和 next
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const checkFilteredPosts = () => {
+        // 优先使用筛选后的 prev/next，如果不存在则使用原始的
+        const hasFiltered = window.__filteredPrevPost !== undefined || window.__filteredNextPost !== undefined
+        if (hasFiltered) {
+          setFilteredPrev(window.__filteredPrevPost || null)
+          setFilteredNext(window.__filteredNextPost || null)
+        } else {
+          // 如果没有筛选后的，使用原始的
+          setFilteredPrev(prev)
+          setFilteredNext(next)
+        }
+      }
+      
+      // 初始检查
+      checkFilteredPosts()
+      
+      // 使用 requestAnimationFrame 来检查更新（更高效）
+      let rafId = null
+      const scheduleCheck = () => {
+        if (rafId) cancelAnimationFrame(rafId)
+        rafId = requestAnimationFrame(() => {
+          checkFilteredPosts()
+          // 只在组件挂载后的一段时间内检查，避免无限循环
+          setTimeout(() => {
+            rafId = null
+          }, 1000)
+        })
+      }
+      
+      // 初始延迟检查（等待 RightCard 渲染）
+      const initialTimeout = setTimeout(() => {
+        checkFilteredPosts()
+      }, 200)
+      
+      // 监听自定义事件（如果 RightCard 触发的话）
+      const handleFilterUpdate = () => {
+        checkFilteredPosts()
+      }
+      window.addEventListener('filteredPostsUpdated', handleFilterUpdate)
+      
+      return () => {
+        clearTimeout(initialTimeout)
+        if (rafId) cancelAnimationFrame(rafId)
+        window.removeEventListener('filteredPostsUpdated', handleFilterUpdate)
+      }
+    } else {
+      // 服务端渲染时使用原始的
+      setFilteredPrev(prev)
+      setFilteredNext(next)
+    }
+  }, [prev, next, post])
 
   if (!post) {
     return <></>
@@ -132,7 +190,7 @@ export default function ArticleDetail(props) {
       {/* 上一篇、文章列表、下一篇 */}
       {post?.type === 'Post' && (
         <div className='my-3 -mx-3 md:-mx-12 px-3 md:px-12'>
-          <ArticleNavigation prev={prev} next={next} />
+          <ArticleNavigation prev={filteredPrev !== null ? filteredPrev : prev} next={filteredNext !== null ? filteredNext : next} />
         </div>
       )}
 
