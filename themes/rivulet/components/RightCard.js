@@ -276,7 +276,7 @@ const RightCard = ({
   const [focusedSection, setFocusedSection] = useState(null) // 当前聚焦的功能区域：'catalog', 'search', 'tags', 'category', 'archive', 'posts'
 
   // 直接使用传入的标签选项，不添加测试标签
-  const finalTagOptions = tagOptions || []
+  const baseTagOptions = tagOptions || []
 
   // 如果没有传入 posts，尝试从 otherProps 中获取 allPosts 或 allPages 并提取文章
   // 注意：allPages 可能在 processPostData 中被删除，但 allPosts 会被保存
@@ -286,6 +286,83 @@ const RightCard = ({
     // 如果当前有分类，初始化为当前分类
     return currentCategory || null
   })
+  
+  // 根据已选中的标签和分类筛选文章后，计算剩余标签及其数量
+  const filteredTagOptions = useMemo(() => {
+    // 如果没有选中任何标签和分类，返回原始标签列表
+    if ((!selectedTags || selectedTags.length === 0) && !selectedCategory) {
+      return baseTagOptions
+    }
+    
+    // 获取筛选后的文章（基于已选中的标签和分类）
+    let filteredPosts = []
+    if (posts && posts.length > 0) {
+      filteredPosts = posts
+    } else if (otherProps.allPosts && Array.isArray(otherProps.allPosts)) {
+      filteredPosts = otherProps.allPosts
+    } else if (otherProps.allPages && Array.isArray(otherProps.allPages)) {
+      filteredPosts = otherProps.allPages.filter(page => page.type === 'Post' && page.status === 'Published')
+    }
+    
+    // 根据选中的分类过滤文章
+    if (selectedCategory && filteredPosts.length > 0) {
+      filteredPosts = filteredPosts.filter(post => {
+        return post.category === selectedCategory
+      })
+    }
+    
+    // 根据选中的标签过滤文章
+    if (selectedTags && selectedTags.length > 0 && filteredPosts.length > 0) {
+      filteredPosts = filteredPosts.filter(post => {
+        // 检查文章是否包含所有选中的标签
+        const postTags = post.tagItems?.map(tag => tag.name) || []
+        return selectedTags.every(selectedTag => postTags.includes(selectedTag))
+      })
+    }
+    
+    // 从筛选后的文章中提取所有标签，并计算每个标签的数量
+    const tagCountMap = new Map()
+    filteredPosts.forEach(post => {
+      if (post.tagItems && Array.isArray(post.tagItems)) {
+        post.tagItems.forEach(tag => {
+          const tagName = tag.name
+          const currentCount = tagCountMap.get(tagName) || 0
+          tagCountMap.set(tagName, currentCount + 1)
+        })
+      }
+    })
+    
+    // 创建新的标签列表，包含：
+    // 1. 已选中的标签（显示筛选后的数量）
+    // 2. 未选中但在筛选后文章中出现的标签
+    const filteredTags = baseTagOptions
+      .filter(tag => {
+        // 如果标签已选中，始终显示
+        if (selectedTags && selectedTags.includes(tag.name)) {
+          return true
+        }
+        // 如果标签未选中，只在筛选后文章中出现时才显示
+        return tagCountMap.has(tag.name)
+      })
+      .map(tag => ({
+        ...tag,
+        count: tagCountMap.get(tag.name) || 0 // 更新为筛选后的数量
+      }))
+      .sort((a, b) => {
+        // 已选中的标签排在前面
+        const aSelected = selectedTags && selectedTags.includes(a.name)
+        const bSelected = selectedTags && selectedTags.includes(b.name)
+        if (aSelected && !bSelected) return -1
+        if (!aSelected && bSelected) return 1
+        // 然后按数量降序排序
+        return b.count - a.count
+      })
+    
+    return filteredTags
+  }, [baseTagOptions, selectedTags, selectedCategory, posts, otherProps.allPosts, otherProps.allPages])
+  
+  // 使用筛选后的标签选项
+  const finalTagOptions = filteredTagOptions
   
   // 记录用户是否手动修改过分类筛选（避免自动同步覆盖用户选择）
   const userModifiedCategoryRef = useRef(false)
@@ -297,7 +374,8 @@ const RightCard = ({
   useEffect(() => {
     if (focusedSection === 'posts' && !hasInitializedRef.current) {
       // 同步分类筛选状态
-      if (currentCategory && currentCategory !== selectedCategory) {
+      // 重要：如果用户已经手动修改过分类（userModifiedCategoryRef.current === true），不要覆盖用户的选择
+      if (!userModifiedCategoryRef.current && currentCategory && currentCategory !== selectedCategory) {
         setSelectedCategory(currentCategory)
       }
       
@@ -308,9 +386,14 @@ const RightCard = ({
       
       hasInitializedRef.current = true
     } else if (focusedSection !== 'posts') {
-      // 离开文章列表单功能模式时，重置初始化标志和用户修改标志
+      // 离开文章列表单功能模式时，重置初始化标志
+      // 注意：不要重置 userModifiedCategoryRef，以保持用户手动选择的分类筛选状态
       hasInitializedRef.current = false
-      userModifiedCategoryRef.current = false
+      // 只有当 selectedCategory 为 null 时，才重置 userModifiedCategoryRef
+      // 这样可以避免在用户手动选择分类后，切换功能区域导致分类被清除
+      if (selectedCategory === null) {
+        userModifiedCategoryRef.current = false
+      }
     }
   }, [focusedSection, currentCategory, currentTag, selectedCategory, selectedTags, toggleTag])
   
@@ -318,8 +401,18 @@ const RightCard = ({
   useEffect(() => {
     if (focusedSection === 'posts' && !userModifiedCategoryRef.current) {
       // 只有在用户没有手动修改过的情况下，才自动同步分类筛选状态
+      // 重要：如果用户已经手动选择了分类（selectedCategory 不为 null），即使 currentCategory 变成 null（路由变化），也绝对不应该清除分类筛选
       if (currentCategory !== selectedCategory) {
-        setSelectedCategory(currentCategory || null)
+        // 只有当 currentCategory 有值，且 selectedCategory 为 null 时，才同步
+        // 这样可以避免在用户手动选择分类后，路由变化导致分类被清除
+        // 如果 currentCategory 为 null/undefined，但 selectedCategory 有值（用户手动选择），则不执行任何操作
+        if (currentCategory && selectedCategory === null) {
+          setSelectedCategory(currentCategory)
+        } else if (currentCategory && currentCategory !== selectedCategory) {
+          // 如果 currentCategory 有值且与 selectedCategory 不同，且用户没有手动修改过，才同步
+          setSelectedCategory(currentCategory)
+        }
+        // 如果 currentCategory 为 null/undefined，但 selectedCategory 有值，不执行任何操作（保护用户手动选择）
       }
     }
   }, [currentCategory, focusedSection, selectedCategory])
@@ -412,8 +505,33 @@ const RightCard = ({
   const handleCategoryChange = (categoryName) => {
     setSelectedCategory(categoryName)
     // 标记用户已手动修改分类筛选
-    userModifiedCategoryRef.current = true
+    // 如果用户明确取消分类选择（传入 null），重置标志，允许后续自动同步
+    if (categoryName === null) {
+      userModifiedCategoryRef.current = false
+    } else {
+      userModifiedCategoryRef.current = true
+    }
   }
+  
+  // 将选中的分类暴露到全局，供 BlogListPage 和 BlogListScroll 使用
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__selectedCategory = selectedCategory
+      // 暴露清除分类的函数
+      window.__clearSelectedCategory = () => {
+        setSelectedCategory(null)
+        userModifiedCategoryRef.current = true
+      }
+      // 触发自定义事件，通知其他组件更新
+      if (window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('selectedCategoryUpdated'))
+      }
+      return () => {
+        delete window.__selectedCategory
+        delete window.__clearSelectedCategory
+      }
+    }
+  }, [selectedCategory])
   
   // 滚动到当前文章并居中显示
   const scrollToCurrentPost = (element) => {

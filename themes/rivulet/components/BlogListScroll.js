@@ -249,6 +249,35 @@ const reorderGroupWithEmptyContainers = (actualPosts, groupCount, remainder, col
 const BlogListScroll = ({ posts }) => {
   const [columns, setColumns] = useState(getColumns())
   const { selectedTags } = useTagFilter()
+  const [selectedCategory, setSelectedCategory] = useState(null)
+
+  // 从全局获取选中的分类
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const checkSelectedCategory = () => {
+        if (window.__selectedCategory !== undefined) {
+          setSelectedCategory(window.__selectedCategory)
+        }
+      }
+      
+      // 初始检查
+      checkSelectedCategory()
+      
+      // 监听自定义事件（如果 RightCard 触发的话）
+      const handleCategoryUpdate = () => {
+        checkSelectedCategory()
+      }
+      window.addEventListener('selectedCategoryUpdated', handleCategoryUpdate)
+      
+      // 使用定时器定期检查（备用方案）
+      const interval = setInterval(checkSelectedCategory, 100)
+      
+      return () => {
+        window.removeEventListener('selectedCategoryUpdated', handleCategoryUpdate)
+        clearInterval(interval)
+      }
+    }
+  }, [])
 
   // 每当文章数量发生变化时，清除现有空白容器
   // 使用 useMemo 确保当 posts 变化时自动重新计算并清除空白容器
@@ -256,8 +285,15 @@ const BlogListScroll = ({ posts }) => {
     // 清除所有空白容器，确保数据源干净
     let filtered = posts.filter(post => post && !post.isEmpty)
     
+    // 根据选中的分类过滤文章
+    if (selectedCategory && filtered.length > 0) {
+      filtered = filtered.filter(post => {
+        return post.category === selectedCategory
+      })
+    }
+    
     // 根据选中的标签过滤文章
-    if (selectedTags && selectedTags.length > 0) {
+    if (selectedTags && selectedTags.length > 0 && filtered.length > 0) {
       filtered = filtered.filter(post => {
         // 检查文章是否包含所有选中的标签
         const postTags = post.tagItems?.map(tag => tag.name) || []
@@ -266,7 +302,7 @@ const BlogListScroll = ({ posts }) => {
     }
     
     return filtered
-  }, [posts, selectedTags])
+  }, [posts, selectedTags, selectedCategory])
 
   // 直接使用清理后的文章，不添加测试文章
   const allPosts = cleanedPosts

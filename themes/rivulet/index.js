@@ -527,22 +527,83 @@ const LayoutPostList = props => {
     }
   }, [topMargin])
   
-  // 判断是否显示结果提示（标签或分类页面，或多标签筛选）
+  // 判断是否显示结果提示（标签或分类页面，或多标签筛选，或分类筛选）
   const { selectedTags } = useTagFilter()
-  const showResultHeader = currentTag || actualCategory || (selectedTags && selectedTags.length > 0)
+  const [selectedCategory, setSelectedCategory] = useState(null)
+  
+  // 从全局获取选中的分类
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const checkSelectedCategory = () => {
+        if (window.__selectedCategory !== undefined) {
+          setSelectedCategory(window.__selectedCategory)
+        }
+      }
+      
+      // 初始检查
+      checkSelectedCategory()
+      
+      // 监听自定义事件
+      const handleCategoryUpdate = () => {
+        checkSelectedCategory()
+      }
+      window.addEventListener('selectedCategoryUpdated', handleCategoryUpdate)
+      
+      return () => {
+        window.removeEventListener('selectedCategoryUpdated', handleCategoryUpdate)
+      }
+    }
+  }, [])
+  
+  const showResultHeader = currentTag || actualCategory || (selectedTags && selectedTags.length > 0) || (selectedCategory && selectedCategory !== null)
   
   // 计算过滤后的文章数量（用于显示在 ResultHeader 中）
   const filteredCount = useMemo(() => {
     if (!posts) return 0
-    if (!selectedTags || selectedTags.length === 0) return posts.length
     
-    return posts.filter(post => {
-      const postTags = post.tagItems?.map(tag => tag.name) || []
-      return selectedTags.every(selectedTag => postTags.includes(selectedTag))
-    }).length
-  }, [posts, selectedTags])
+    let filtered = posts
+    
+    // 根据选中的分类过滤
+    if (selectedCategory && selectedCategory !== null) {
+      filtered = filtered.filter(post => post.category === selectedCategory)
+    }
+    
+    // 根据选中的标签过滤
+    if (selectedTags && selectedTags.length > 0) {
+      filtered = filtered.filter(post => {
+        const postTags = post.tagItems?.map(tag => tag.name) || []
+        return selectedTags.every(selectedTag => postTags.includes(selectedTag))
+      })
+    }
+    
+    return filtered.length
+  }, [posts, selectedTags, selectedCategory])
   
-  const resultCount = showResultHeader && selectedTags && selectedTags.length > 0 ? filteredCount : (posts?.length || 0)
+  const resultCount = showResultHeader && (selectedTags?.length > 0 || selectedCategory) ? filteredCount : (posts?.length || 0)
+  
+  // 确定 ResultHeader 的类型
+  const getResultHeaderType = () => {
+    const hasCategoryFilter = selectedCategory && selectedCategory !== null
+    const hasTagFilter = selectedTags && selectedTags.length > 0
+    
+    // 复合筛选：分类 + 标签
+    if (hasCategoryFilter && hasTagFilter) {
+      return 'combined'
+    }
+    
+    // 只有标签筛选
+    if (hasTagFilter) {
+      return 'tags'
+    }
+    
+    // 只有分类筛选
+    if (hasCategoryFilter) {
+      return 'category'
+    }
+    
+    // 默认：标签或分类详情页
+    return currentTag ? 'tag' : 'category'
+  }
   
   // 判断是否是分类/标签详情页（需要圆角容器）
   const isCategoryOrTagDetailPage = currentTag || actualCategory
@@ -554,11 +615,11 @@ const LayoutPostList = props => {
         <WWAds className='w-full' orientation='horizontal' />
       </div>
       
-      {/* 结果提示头部 - 标签或分类页面，或多标签筛选 */}
+      {/* 结果提示头部 - 标签或分类页面，或多标签筛选，或分类筛选，或复合筛选 */}
       {showResultHeader && (
         <ResultHeader 
-          type={selectedTags && selectedTags.length > 0 ? 'tags' : (currentTag ? 'tag' : 'category')} 
-          name={currentTag || actualCategory} 
+          type={getResultHeaderType()} 
+          name={currentTag || actualCategory || selectedCategory} 
           count={resultCount} 
         />
       )}
