@@ -320,7 +320,7 @@ const PageNumber = () => {
   return (
     <aside
       id="page-number-area"
-      className={`hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-250 ease-linear ${isMounted ? 'opacity-100' : 'opacity-0'}`}
+      className="hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20"
       style={pageNumberStyle}>
       <div className='px-3 py-2 h-full'>
         <div className='w-full h-full flex items-center justify-center gap-2'>
@@ -329,8 +329,8 @@ const PageNumber = () => {
             onClick={goToPreviousPage}
             disabled={!isMounted}
             className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200 ${!isMounted || currentPage <= 1
-                ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
+              ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
               }`}
             title='上一页'>
             <i className='fas fa-chevron-left text-sm'></i>
@@ -369,8 +369,8 @@ const PageNumber = () => {
             onClick={goToNextPage}
             disabled={!isMounted}
             className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200 ${!isMounted || currentPage >= totalPages
-                ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
+              ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
               }`}
             title='下一页'>
             <i className='fas fa-chevron-right text-sm'></i>
