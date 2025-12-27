@@ -20,14 +20,15 @@ const PageNumber = () => {
   const cardGap = siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'
   const pageNumberHeight = '44px'
   const bottomGap = '12px' // 与窗口下边缘的间隙恒定为12px
-  const pageNumberTop = `calc(100vh - ${pageNumberHeight} - ${bottomGap})`
 
   // 左边缘与左卡片左边缘对齐（左卡片 left: cardGap）
+  // 使用 bottom 定位代替 top 计算，避免高度计算延迟导致的位置跳动
   const pageNumberStyle = {
-    top: pageNumberTop,
+    bottom: bottomGap,
     width: 'auto',
     height: pageNumberHeight,
     left: cardGap,
+    right: 'auto', // 强制重置 right，防止干扰
     minWidth: 'fit-content'
   }
 
@@ -35,6 +36,16 @@ const PageNumber = () => {
   useEffect(() => {
     setIsMounted(true)
   }, [])
+
+  // ... existing logic ...
+
+  if (!isMounted) return null
+
+  return createPortal(
+    <aside
+      id="page-number-area"
+      className="hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20"
+      style={pageNumberStyle}>
 
   // 计算当前页码和总页数
   useEffect(() => {
