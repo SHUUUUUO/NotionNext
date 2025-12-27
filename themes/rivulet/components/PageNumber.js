@@ -39,13 +39,6 @@ const PageNumber = () => {
 
   // ... existing logic ...
 
-  if (!isMounted) return null
-
-  return createPortal(
-    <aside
-      id="page-number-area"
-      className="hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20"
-      style={pageNumberStyle}>
 
   // 计算当前页码和总页数
   useEffect(() => {
