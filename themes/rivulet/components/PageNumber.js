@@ -1,6 +1,7 @@
 import { siteConfig } from '@/lib/config'
 import { isBrowser } from '@/lib/utils'
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import CONFIG from '../config'
 
 /**
@@ -317,7 +318,9 @@ const PageNumber = () => {
     }
   }
 
-  return (
+  if (!isMounted) return null
+
+  return createPortal(
     <aside
       id="page-number-area"
       className="hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20"
@@ -377,7 +380,8 @@ const PageNumber = () => {
           </button>
         </div>
       </div>
-    </aside>
+    </aside>,
+    document.body
   )
 }
 
