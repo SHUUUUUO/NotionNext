@@ -38,13 +38,13 @@ const LeftCard = ({
   const [showCopyright, setShowCopyright] = useState(true) // 是否显示版权信息
   const [enableMenuScroll, setEnableMenuScroll] = useState(false) // 是否启用菜单内部滚动
   const [menuMaxHeight, setMenuMaxHeight] = useState(null) // 菜单最大高度
-  
+
   // 计算卡片样式
   const cardGapValue = cardGap || siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'
   const cardWidth = '240px'
   const cardTop = cardGapValue
-  const [cardBottomGap, setCardBottomGap] = useState('12px') // 默认底部间距12px
-  
+  const [cardBottomGap, setCardBottomGap] = useState('68px') // 默认底部间距68px，与右侧卡片保持一致，避免页面加载时收缩
+
   // 检测页码组件是否存在，动态调整底部间距
   useEffect(() => {
     if (!isBrowser) return
@@ -54,9 +54,9 @@ const LeftCard = ({
       // 如果页码组件存在且可见，底部间距为68px，否则为12px
       if (pageNumber) {
         const rect = pageNumber.getBoundingClientRect()
-        const isVisible = rect.width > 0 && rect.height > 0 && 
-                         window.getComputedStyle(pageNumber).display !== 'none' &&
-                         window.getComputedStyle(pageNumber).visibility !== 'hidden'
+        const isVisible = rect.width > 0 && rect.height > 0 &&
+          window.getComputedStyle(pageNumber).display !== 'none' &&
+          window.getComputedStyle(pageNumber).visibility !== 'hidden'
         setCardBottomGap(isVisible ? '68px' : '12px')
       } else {
         setCardBottomGap('12px')
@@ -102,7 +102,7 @@ const LeftCard = ({
       clearTimeout(timer2)
     }
   }, [router.asPath]) // 路由变化时重新检测
-  
+
   const cardStyle = {
     top: cardTop,
     width: cardWidth,
@@ -133,15 +133,15 @@ const LeftCard = ({
       // 获取菜单区域的底部位置
       const menuRect = menuSection.getBoundingClientRect()
       const menuBottom = menuRect.bottom
-      
+
       // 计算菜单底部到屏幕底部的距离
       const distanceToBottom = window.innerHeight - menuBottom
-      
+
       // 计算各组件高度
       const announcementTitleHeight = 40 // 公告标题高度
       const announcementFullHeight = 192 // 公告完整高度（12rem = 192px）
       const sectionGap = 12 // 分隔线和间距（pt-3 = 12px，已改为紧凑模式）
-      
+
       // 获取页码组件位置，用于计算可用空间
       const pageNumber = document.querySelector('#page-number-area')
       let pageNumberTop = window.innerHeight
@@ -153,7 +153,7 @@ const LeftCard = ({
         const bottomGap = 12
         pageNumberTop = window.innerHeight - bottomGap
       }
-      
+
       // 实际测量 SiteInfo 的高度（如果已渲染）
       const siteInfoElement = contentRef.current?.querySelector('footer')
       let actualCopyrightHeight = 80 // 默认估算值（增加高度）
@@ -161,22 +161,22 @@ const LeftCard = ({
         const siteInfoRect = siteInfoElement.getBoundingClientRect()
         actualCopyrightHeight = siteInfoRect.height + sectionGap // 包括分隔线间距
       }
-      
+
       // 计算公告所需高度
       const announcementHeight = showAnnouncementTitleOnly ? announcementTitleHeight : announcementFullHeight
       const announcementWithGap = notice ? (announcementHeight + sectionGap) : 0
-      
+
       // 计算显示版权信息所需的总高度（包括公告和分隔线）
       const totalHeightForCopyright = announcementWithGap + actualCopyrightHeight
-      
+
       // 严格判定：如果版权信息会溢出，立即隐藏
       const availableSpaceForCopyright = pageNumberTop - menuBottom
       const willCopyrightOverflow = availableSpaceForCopyright < totalHeightForCopyright
-      
+
       if (willCopyrightOverflow) {
         // 版权信息会溢出，立即隐藏
         setShowCopyright(false)
-        
+
         // 检查是否可以显示公告
         if (notice && availableSpaceForCopyright >= announcementHeight + sectionGap) {
           // 可以显示公告
@@ -197,19 +197,19 @@ const LeftCard = ({
         setShowBottomComponents(true)
         setShowAnnouncementTitleOnly(false)
         setShowCopyright(true)
-        
+
         // 恢复默认高度
         if (notice) {
           setAnnouncementMaxHeight('12rem')
         }
       }
-      
+
       // 计算菜单区域的高度和可用空间
       const menuHeight = menuRect.height
       const menuTop = menuRect.top
       const bottomPadding = 16 // 底部留出 16px 的空隙
       const availableHeight = pageNumberTop - menuTop - bottomPadding
-      
+
       // 如果菜单高度超过可用空间，启用菜单内部滚动
       // 给一个小的容差，避免因为计算误差导致不必要的滚动
       if (menuHeight > availableHeight - 10) {
@@ -331,7 +331,7 @@ const LeftCard = ({
         opacity: isCollapsed ? 0 : 1,
         pointerEvents: isCollapsed ? 'none' : 'auto'
       }}>
-      <div 
+      <div
         ref={contentRef}
         className="p-6 space-y-3 flex flex-col items-center text-center overflow-y-auto overflow-x-hidden"
         style={contentMaxHeight ? { maxHeight: `${contentMaxHeight}px` } : undefined}
@@ -370,7 +370,7 @@ const LeftCard = ({
         </section>
 
         {/* 菜单 - 仅在大屏模式下显示 */}
-        <section 
+        <section
           ref={menuSectionRef}
           className={`flex flex-col items-center w-full pt-6 border-t border-gray-200 dark:border-gray-700 ${enableMenuScroll ? 'overflow-y-auto overflow-x-hidden pb-4' : ''}`}
           style={enableMenuScroll && menuMaxHeight ? {

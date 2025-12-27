@@ -20,7 +20,7 @@ const PageNumber = () => {
   const pageNumberHeight = '44px'
   const bottomGap = '12px' // 与窗口下边缘的间隙恒定为12px
   const pageNumberTop = `calc(100vh - ${pageNumberHeight} - ${bottomGap})`
-  
+
   // 左边缘与左卡片左边缘对齐（左卡片 left: cardGap）
   const pageNumberStyle = {
     top: pageNumberTop,
@@ -57,7 +57,7 @@ const PageNumber = () => {
 
       // 找到当前视口中心所在的组
       let currentPageIndex = 1
-      
+
       for (let i = 0; i < gridContainers.length; i++) {
         const container = gridContainers[i]
         const rect = container.getBoundingClientRect()
@@ -69,26 +69,26 @@ const PageNumber = () => {
           currentPageIndex = i + 1
           break
         }
-        
+
         // 如果视口中心在当前容器上方，且这是第一个容器
         if (viewportCenter < containerTop && i === 0) {
           currentPageIndex = 1
           break
         }
-        
+
         // 如果视口中心在当前容器下方，且这是最后一个容器
         if (viewportCenter > containerBottom && i === gridContainers.length - 1) {
           currentPageIndex = totalPagesCount
           break
         }
-        
+
         // 如果视口中心在当前容器下方，但还有下一个容器
         if (viewportCenter > containerBottom && i < gridContainers.length - 1) {
           // 检查下一个容器
           const nextContainer = gridContainers[i + 1]
           const nextRect = nextContainer.getBoundingClientRect()
           const nextContainerTop = nextRect.top + scrollY
-          
+
           // 如果视口中心在下一个容器上方，说明当前容器是可见的
           if (viewportCenter < nextContainerTop) {
             currentPageIndex = i + 1
@@ -107,7 +107,7 @@ const PageNumber = () => {
     const handleScroll = () => {
       calculatePageNumber()
     }
-    
+
     window.addEventListener('scroll', handleScroll, { passive: true })
     window.addEventListener('resize', calculatePageNumber)
 
@@ -137,27 +137,27 @@ const PageNumber = () => {
   // 查找目标页的第一篇文章
   const findFirstArticle = (container) => {
     if (!container) return null
-    
+
     const gridItems = container.querySelectorAll('.grid-item')
     let firstArticle = null
     let firstArticleTop = Infinity
-    
+
     for (let i = 0; i < gridItems.length; i++) {
       const gridItem = gridItems[i]
-      
+
       // 跳过空白容器
-      const isEmptyPlaceholder = gridItem.querySelector('[class*="EmptyPlaceholder"]') || 
-                                 gridItem.querySelector('div[style*="minHeight: \'200px\'"]')
+      const isEmptyPlaceholder = gridItem.querySelector('[class*="EmptyPlaceholder"]') ||
+        gridItem.querySelector('div[style*="minHeight: \'200px\'"]')
       if (isEmptyPlaceholder) {
         continue
       }
-      
+
       const article = gridItem.querySelector('article')
       if (article) {
         const rect = article.getBoundingClientRect()
         const scrollY = window.scrollY
         const articleTop = rect.top + scrollY
-        
+
         // 找到位置最靠上的文章
         if (articleTop < firstArticleTop) {
           firstArticle = article
@@ -165,20 +165,20 @@ const PageNumber = () => {
         }
       }
     }
-    
+
     return firstArticle
   }
 
   // 滚动到指定元素
   const scrollToElement = (element, offset = 20) => {
     if (!element) return
-    
+
     requestAnimationFrame(() => {
       const rect = element.getBoundingClientRect()
       const scrollY = window.scrollY
       const elementTop = rect.top + scrollY
       const targetScrollTop = Math.max(0, elementTop - offset)
-      
+
       window.scrollTo({
         top: targetScrollTop,
         behavior: 'smooth'
@@ -191,19 +191,19 @@ const PageNumber = () => {
     if (!isBrowser) return
     const totalPagesFromDOM = document.querySelectorAll('.grid-container[data-group-index]').length
     if (pageNumber < 1 || pageNumber > totalPagesFromDOM) return
-    
+
     // 延迟执行，确保 DOM 已更新
     setTimeout(() => {
       const gridContainers = document.querySelectorAll('.grid-container[data-group-index]')
       const targetIndex = pageNumber - 1
-      
+
       if (!gridContainers[targetIndex]) {
         return
       }
-      
+
       const targetContainer = gridContainers[targetIndex]
       const firstArticle = findFirstArticle(targetContainer)
-      
+
       // 优先滚动到第一篇文章，否则滚动到容器顶部
       if (firstArticle) {
         scrollToElement(firstArticle, 20)
@@ -217,7 +217,7 @@ const PageNumber = () => {
   // 实时获取当前页码（从 DOM 计算，不依赖 state）
   const getCurrentPageFromDOM = () => {
     if (!isBrowser) return 1
-    
+
     const gridContainers = document.querySelectorAll('.grid-container[data-group-index]')
     if (gridContainers.length === 0) return 1
 
@@ -225,7 +225,7 @@ const PageNumber = () => {
     const scrollY = window.scrollY
 
     let currentPageIndex = 1
-    
+
     for (let i = 0; i < gridContainers.length; i++) {
       const container = gridContainers[i]
       const rect = container.getBoundingClientRect()
@@ -236,22 +236,22 @@ const PageNumber = () => {
         currentPageIndex = i + 1
         break
       }
-      
+
       if (viewportCenter < containerTop && i === 0) {
         currentPageIndex = 1
         break
       }
-      
+
       if (viewportCenter > containerBottom && i === gridContainers.length - 1) {
         currentPageIndex = gridContainers.length
         break
       }
-      
+
       if (viewportCenter > containerBottom && i < gridContainers.length - 1) {
         const nextContainer = gridContainers[i + 1]
         const nextRect = nextContainer.getBoundingClientRect()
         const nextContainerTop = nextRect.top + scrollY
-        
+
         if (viewportCenter < nextContainerTop) {
           currentPageIndex = i + 1
           break
@@ -266,7 +266,7 @@ const PageNumber = () => {
   const executePageJump = (pageNumber) => {
     const pageNum = typeof pageNumber === 'number' ? pageNumber : parseInt(pageNumber)
     if (isNaN(pageNum)) return false
-    
+
     const totalPagesFromDOM = document.querySelectorAll('.grid-container[data-group-index]').length || totalPages
     if (pageNum >= 1 && pageNum <= totalPagesFromDOM) {
       scrollToPage(pageNum)
@@ -320,7 +320,7 @@ const PageNumber = () => {
   return (
     <aside
       id="page-number-area"
-      className="hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-250 ease-linear"
+      className={`hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-250 ease-linear ${isMounted ? 'opacity-100' : 'opacity-0'}`}
       style={pageNumberStyle}>
       <div className='px-3 py-2 h-full'>
         <div className='w-full h-full flex items-center justify-center gap-2'>
@@ -328,11 +328,10 @@ const PageNumber = () => {
           <button
             onClick={goToPreviousPage}
             disabled={!isMounted}
-            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200 ${
-              !isMounted || currentPage <= 1
+            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200 ${!isMounted || currentPage <= 1
                 ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
-            }`}
+              }`}
             title='上一页'>
             <i className='fas fa-chevron-left text-sm'></i>
           </button>
@@ -369,11 +368,10 @@ const PageNumber = () => {
           <button
             onClick={goToNextPage}
             disabled={!isMounted}
-            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200 ${
-              !isMounted || currentPage >= totalPages
+            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200 ${!isMounted || currentPage >= totalPages
                 ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
-            }`}
+              }`}
             title='下一页'>
             <i className='fas fa-chevron-right text-sm'></i>
           </button>
