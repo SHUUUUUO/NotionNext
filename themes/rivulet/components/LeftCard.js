@@ -43,65 +43,7 @@ const LeftCard = ({
   const cardGapValue = cardGap || siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'
   const cardWidth = '240px'
   const cardTop = cardGapValue
-  const [cardBottomGap, setCardBottomGap] = useState('68px') // 默认底部间距68px，与右侧卡片保持一致，避免页面加载时收缩
-
-  // 检测页码组件是否存在，动态调整底部间距
-  useEffect(() => {
-    if (!isBrowser) return
-
-    const updateBottomGap = () => {
-      const pageNumber = document.querySelector('#page-number-area')
-      // 如果页码组件存在且可见，底部间距为68px，否则为12px
-      if (pageNumber) {
-        const rect = pageNumber.getBoundingClientRect()
-        const isVisible = rect.width > 0 && rect.height > 0 &&
-          window.getComputedStyle(pageNumber).display !== 'none' &&
-          window.getComputedStyle(pageNumber).visibility !== 'hidden'
-        setCardBottomGap(isVisible ? '68px' : '12px')
-      } else {
-        setCardBottomGap('12px')
-      }
-    }
-
-    // 初始计算
-    updateBottomGap()
-
-    // 监听窗口大小变化和滚动
-    window.addEventListener('resize', updateBottomGap)
-    window.addEventListener('scroll', updateBottomGap, { passive: true })
-
-    // 使用 MutationObserver 监听页码组件的变化
-    const observer = new MutationObserver(updateBottomGap)
-    const pageNumber = document.querySelector('#page-number-area')
-    if (pageNumber) {
-      observer.observe(pageNumber, {
-        attributes: true,
-        attributeFilter: ['style', 'class'],
-        childList: true,
-        subtree: true
-      })
-    }
-
-    // 监听整个文档的变化，以便检测页码组件的出现/消失
-    const documentObserver = new MutationObserver(updateBottomGap)
-    documentObserver.observe(document.body, {
-      childList: true,
-      subtree: true
-    })
-
-    // 延迟计算，等待内容渲染完成
-    const timer = setTimeout(updateBottomGap, 100)
-    const timer2 = setTimeout(updateBottomGap, 500)
-
-    return () => {
-      window.removeEventListener('resize', updateBottomGap)
-      window.removeEventListener('scroll', updateBottomGap)
-      observer.disconnect()
-      documentObserver.disconnect()
-      clearTimeout(timer)
-      clearTimeout(timer2)
-    }
-  }, [router.asPath]) // 路由变化时重新检测
+  const cardBottomGap = '68px' // 始终保持底部间距68px，与右侧卡片保持一致
 
   const cardStyle = {
     top: cardTop,
@@ -149,8 +91,8 @@ const LeftCard = ({
         const pageNumberRect = pageNumber.getBoundingClientRect()
         pageNumberTop = pageNumberRect.top
       } else {
-        // 如果页码组件不存在，卡片下边缘距离屏幕底部12px
-        const bottomGap = 12
+        // 如果页码组件不存在，强制保留 68px 间距，保持对齐
+        const bottomGap = 68
         pageNumberTop = window.innerHeight - bottomGap
       }
 
@@ -248,8 +190,8 @@ const LeftCard = ({
         const pageNumberRect = pageNumber.getBoundingClientRect()
         pageNumberTop = pageNumberRect.top
       } else {
-        // 如果页码组件不存在，卡片下边缘距离屏幕底部12px
-        const bottomGap = 12
+        // 如果页码组件不存在，强制保留 68px 间距，保持对齐
+        const bottomGap = 68
         pageNumberTop = window.innerHeight - bottomGap
       }
 
@@ -408,4 +350,3 @@ const LeftCard = ({
 }
 
 export default LeftCard
-
