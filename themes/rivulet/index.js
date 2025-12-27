@@ -57,12 +57,12 @@ const LayoutBase = props => {
   const { onLoading, fullWidth } = useGlobal()
   const searchModal = useRef(null)
   const router = useRouter()
-  
+
   // 标签多选状态管理
   // 初始状态设为空数组，避免服务器端和客户端渲染不一致
   const [selectedTags, setSelectedTags] = useState([])
   const [isClient, setIsClient] = useState(false)
-  
+
   // 客户端挂载后从 localStorage 读取保存的标签
   useEffect(() => {
     setIsClient(true)
@@ -80,14 +80,14 @@ const LayoutBase = props => {
       }
     }
   }, [])
-  
+
   // 保存选中的标签到 localStorage
   useEffect(() => {
     if (isBrowser && isClient) {
       localStorage.setItem('rivulet-selected-tags', JSON.stringify(selectedTags))
     }
   }, [selectedTags, isClient])
-  
+
   // 切换标签选中状态 - 使用 useCallback 优化
   const toggleTag = useCallback((tagName) => {
     setSelectedTags(prev => {
@@ -98,12 +98,12 @@ const LayoutBase = props => {
       }
     })
   }, [])
-  
+
   // 清除所有选中的标签 - 使用 useCallback 优化
   const clearSelectedTags = useCallback(() => {
     setSelectedTags([])
   }, [])
-  
+
   // 侧边栏折叠状态管理
   const RIVULET_SIDEBAR_COLLAPSE_SATUS_DEFAULT =
     fullWidth ||
@@ -141,30 +141,30 @@ const LayoutBase = props => {
 
   // 判断是否为文章页面
   const isArticlePage = props.post && !router.asPath?.match(/^\/(tag|category|archive|search|page)/)
-  
+
   // 判断是否为瀑布流页面（有 grid-container 的页面）
   const [isWaterfallPage, setIsWaterfallPage] = useState(false)
-  
+
   // 在客户端检测是否为瀑布流页面
   useEffect(() => {
     if (!isBrowser) return
-    
+
     const checkWaterfallPage = () => {
       const hasGridContainer = document.querySelector('.grid-container') !== null
       setIsWaterfallPage(hasGridContainer)
     }
-    
+
     // 初始检测
     checkWaterfallPage()
-    
+
     // 监听路由变化
     const handleRouteChange = () => {
       // 延迟检测，确保 DOM 已更新
       setTimeout(checkWaterfallPage, 100)
     }
-    
+
     router.events.on('routeChangeComplete', handleRouteChange)
-    
+
     return () => {
       router.events.off('routeChangeComplete', handleRouteChange)
     }
@@ -189,13 +189,13 @@ const LayoutBase = props => {
       localStorage.setItem('rivulet-fullscreen-reading', isFullScreenReading)
     }
   }, [isFullScreenReading, isArticlePage])
-  
+
   // 在瀑布流页面，当卡片收起时自动进入全屏模式
   useEffect(() => {
     if (!isBrowser || !isWaterfallPage || isArticlePage) {
       return
     }
-    
+
     // 如果卡片收起，自动进入全屏模式
     if (isCollapsed && !isFullScreenReading) {
       setIsFullScreenReading(true)
@@ -389,88 +389,88 @@ const LayoutBase = props => {
       return () => clearTimeout(timer)
     }
   }, [onLoading])
-  
+
   return (
     <ThemeGlobalRivulet.Provider value={{ searchModal }}>
       <TagFilterContext.Provider value={{ selectedTags, toggleTag, clearSelectedTags }}>
         <div
-        id='theme-fukasawa'
-        className={`${siteConfig('FONT_STYLE')} dark:bg-black scroll-smooth ${isFullScreenReading ? 'fullscreen-reading-mode' : ''}`}>
-        <Style />
-        {/* 页头导航，此主题只在移动端生效 */}
-        <Header {...props} />
+          id='theme-fukasawa'
+          className={`${siteConfig('FONT_STYLE')} dark:bg-black scroll-smooth ${isFullScreenReading ? 'fullscreen-reading-mode' : ''}`}>
+          <Style />
+          {/* 页头导航，此主题只在移动端生效 */}
+          <Header {...props} />
 
-        <div className='flex'>
+          <div className='flex'>
 
-          {/* 中间主内容区 */}
-          <main
-            id='wrapper'
-            className='relative flex flex-1 w-full justify-center bg-day dark:bg-night'
-            style={{
-              paddingBottom: siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'
-            }}>
-            <div
-              id='container-inner'
-              className={`${fullWidth ? '' : '2xl:max-w-6xl md:max-w-4xl'} w-full relative z-10`}>
-              <Transition
-                show={!onLoading}
-                appear={true}
-                className='w-full'
-                enter='transition ease-in-out duration-700 transform order-first'
-                enterFrom='opacity-0 translate-y-16'
-                enterTo='opacity-100'
-                leave='transition ease-in-out duration-300 transform'
-                leaveFrom='opacity-100 translate-y-0'
-                leaveTo='opacity-0 -translate-y-16'
-                unmount={false}>
-                <div> {headerSlot} </div>
-                <div> {children} </div>
-              </Transition>
+            {/* 中间主内容区 */}
+            <main
+              id='wrapper'
+              className='relative flex flex-1 w-full justify-center bg-day dark:bg-night'
+              style={{
+                paddingBottom: siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'
+              }}>
+              <div
+                id='container-inner'
+                className={`${fullWidth ? '' : '2xl:max-w-6xl md:max-w-4xl'} w-full relative z-10`}>
+                <Transition
+                  show={!onLoading}
+                  appear={true}
+                  className='w-full'
+                  enter='transition ease-in-out duration-700 transform order-first'
+                  enterFrom='opacity-0 translate-y-16'
+                  enterTo='opacity-100'
+                  leave='transition ease-in-out duration-300 transform'
+                  leaveFrom='opacity-100 translate-y-0'
+                  leaveTo='opacity-0 -translate-y-16'
+                  unmount={false}>
+                  <div> {headerSlot} </div>
+                  <div> {children} </div>
+                </Transition>
 
-              <div className='mt-2'>
-                <AdSlot type='native' />
+                <div className='mt-2'>
+                  <AdSlot type='native' />
+                </div>
               </div>
-            </div>
-          </main>
+            </main>
 
-          {/* 左侧卡片 */}
-          <LeftCard
-            isCollapsed={isCollapsed || isFullScreenReading}
-            cardGap={siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'}
-            isFullScreenReading={isFullScreenReading}
-            {...props}
-          />
+            {/* 左侧卡片 */}
+            <LeftCard
+              isCollapsed={isCollapsed || isFullScreenReading}
+              cardGap={siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'}
+              isFullScreenReading={isFullScreenReading}
+              {...props}
+            />
 
-          {/* 右侧卡片 */}
-          <RightCard
-            post={props.post}
-            notice={props.notice}
-            isCollapsed={isCollapsed || isFullScreenReading}
-            cardGap={siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'}
-            tagOptions={props.tagOptions}
-            currentTag={props.currentTag}
-            categoryOptions={props.categoryOptions}
-            currentCategory={props.currentCategory}
-            isFullScreenReading={isFullScreenReading}
-            posts={props.posts || props.allPosts || []}
-            isArticlePage={isArticlePage}
-            {...props}
-          />
+            {/* 右侧卡片 */}
+            <RightCard
+              post={props.post}
+              notice={props.notice}
+              isCollapsed={isCollapsed || isFullScreenReading}
+              cardGap={siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'}
+              tagOptions={props.tagOptions}
+              currentTag={props.currentTag}
+              categoryOptions={props.categoryOptions}
+              currentCategory={props.currentCategory}
+              isFullScreenReading={isFullScreenReading}
+              posts={props.posts || props.allPosts || []}
+              isArticlePage={isArticlePage}
+              {...props}
+            />
 
-          {/* 功能按键区域 */}
-          <FunctionArea
-            isCollapsed={isCollapsed}
-            toggleOpen={toggleOpen}
-            showCollapseButton={RIVULET_SIDEBAR_COLLAPSE_BUTTON}
-            isFullScreenReading={isFullScreenReading}
-            toggleFullScreenReading={toggleFullScreenReading}
-            isArticlePage={isArticlePage}
-            isWaterfallPage={isWaterfallPage}
-          />
+            {/* 功能按键区域 */}
+            <FunctionArea
+              isCollapsed={isCollapsed}
+              toggleOpen={toggleOpen}
+              showCollapseButton={RIVULET_SIDEBAR_COLLAPSE_BUTTON}
+              isFullScreenReading={isFullScreenReading}
+              toggleFullScreenReading={toggleFullScreenReading}
+              isArticlePage={isArticlePage}
+              isWaterfallPage={isWaterfallPage}
+            />
+          </div>
+
+          <AlgoliaSearchModal cRef={searchModal} {...props} />
         </div>
-
-        <AlgoliaSearchModal cRef={searchModal} {...props} />
-      </div>
       </TagFilterContext.Provider>
     </ThemeGlobalRivulet.Provider>
   )
@@ -494,26 +494,26 @@ const LayoutPostList = props => {
   const cardGap = siteConfig('CARD_GAP', null, CONFIG) || '0.75rem'
   const { currentTag, currentCategory, category, posts } = props
   const router = useRouter()
-  
+
   // 从多个来源获取分类名称：优先使用 currentCategory，其次使用 category prop，最后从路由中获取
-  const actualCategory = currentCategory || category || router.query?.category || 
+  const actualCategory = currentCategory || category || router.query?.category ||
     (router.asPath?.match(/\/category\/([^\/]+)/)?.[1])
-  
+
   // 瀑布流顶部间距 - 只包含间隙，与卡片顶部平齐
   // 注意：单独页面（文章、归档、分类、标签）使用 10px，瀑布流列表使用 cardGap
   const topMargin = cardGap // 等于 1rem (16px)，不含顶栏高度
-  
+
   // 修改 #container-inner 的上边缘间距，使其与左右卡片顶部对齐
   // 注意：这个只对瀑布流列表页面生效，单独页面由 CSS 控制
   useEffect(() => {
     if (isBrowser) {
       const containerInner = document.querySelector('#container-inner')
       // 检查是否是单独页面（文章、归档、分类、标签）
-      const isSinglePage = containerInner?.querySelector('#container') || 
-                          containerInner?.querySelector('#category-list') ||
-                          containerInner?.querySelector('#tags-list') ||
-                          containerInner?.querySelector('[id^="20"]')
-      
+      const isSinglePage = containerInner?.querySelector('#container') ||
+        containerInner?.querySelector('#category-list') ||
+        containerInner?.querySelector('#tags-list') ||
+        containerInner?.querySelector('[id^="20"]')
+
       if (containerInner && !isSinglePage) {
         // 只有瀑布流列表页面才设置 topMargin
         containerInner.style.paddingTop = topMargin
@@ -526,11 +526,11 @@ const LayoutPostList = props => {
       }
     }
   }, [topMargin])
-  
+
   // 判断是否显示结果提示（标签或分类页面，或多标签筛选，或分类筛选）
   const { selectedTags } = useTagFilter()
   const [selectedCategory, setSelectedCategory] = useState(null)
-  
+
   // 从全局获取选中的分类
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -539,35 +539,35 @@ const LayoutPostList = props => {
           setSelectedCategory(window.__selectedCategory)
         }
       }
-      
+
       // 初始检查
       checkSelectedCategory()
-      
+
       // 监听自定义事件
       const handleCategoryUpdate = () => {
         checkSelectedCategory()
       }
       window.addEventListener('selectedCategoryUpdated', handleCategoryUpdate)
-      
+
       return () => {
         window.removeEventListener('selectedCategoryUpdated', handleCategoryUpdate)
       }
     }
   }, [])
-  
+
   const showResultHeader = currentTag || actualCategory || (selectedTags && selectedTags.length > 0) || (selectedCategory && selectedCategory !== null)
-  
+
   // 计算过滤后的文章数量（用于显示在 ResultHeader 中）
   const filteredCount = useMemo(() => {
     if (!posts) return 0
-    
+
     let filtered = posts
-    
+
     // 根据选中的分类过滤
     if (selectedCategory && selectedCategory !== null) {
       filtered = filtered.filter(post => post.category === selectedCategory)
     }
-    
+
     // 根据选中的标签过滤
     if (selectedTags && selectedTags.length > 0) {
       filtered = filtered.filter(post => {
@@ -575,36 +575,36 @@ const LayoutPostList = props => {
         return selectedTags.every(selectedTag => postTags.includes(selectedTag))
       })
     }
-    
+
     return filtered.length
   }, [posts, selectedTags, selectedCategory])
-  
+
   const resultCount = showResultHeader && (selectedTags?.length > 0 || selectedCategory) ? filteredCount : (posts?.length || 0)
-  
+
   // 确定 ResultHeader 的类型 - 使用 useMemo 优化
   const resultHeaderType = useMemo(() => {
     const hasCategoryFilter = selectedCategory && selectedCategory !== null
     const hasTagFilter = selectedTags && selectedTags.length > 0
-    
+
     // 复合筛选：分类 + 标签
     if (hasCategoryFilter && hasTagFilter) {
       return 'combined'
     }
-    
+
     // 只有标签筛选
     if (hasTagFilter) {
       return 'tags'
     }
-    
+
     // 只有分类筛选
     if (hasCategoryFilter) {
       return 'category'
     }
-    
+
     // 默认：标签或分类详情页
     return currentTag ? 'tag' : 'category'
   }, [selectedCategory, selectedTags, currentTag])
-  
+
   // 判断是否是分类/标签详情页（需要圆角容器）
   const isCategoryOrTagDetailPage = currentTag || actualCategory
 
@@ -614,23 +614,23 @@ const LayoutPostList = props => {
       <div className='w-full mb-0'>
         <WWAds className='w-full' orientation='horizontal' />
       </div>
-      
+
       {/* 结果提示头部 - 标签或分类页面，或多标签筛选，或分类筛选，或复合筛选 */}
       {showResultHeader && (
-        <ResultHeader 
-          type={resultHeaderType} 
-          name={currentTag || actualCategory || selectedCategory} 
-          count={resultCount} 
+        <ResultHeader
+          type={resultHeaderType}
+          name={currentTag || actualCategory || selectedCategory}
+          count={resultCount}
         />
       )}
-      
+
       {/* 瀑布流内容 */}
-      { POST_LIST_STYLE=== 'page' ? (
+      {POST_LIST_STYLE === 'page' ? (
         <BlogListPage {...props} />
       ) : (
         <BlogListScroll {...props} />
       )}
-      
+
       {/* 页码组件 - 只在瀑布流页面显示 */}
       <PageNumber />
     </div>
@@ -695,10 +695,10 @@ const LayoutSearch = props => {
   }, [router])
   return (
     <div className='bg-white dark:bg-hexo-black-gray rounded-lg overflow-hidden p-6'>
-      <ResultHeader 
-        type="search" 
-        keyword={keyword} 
-        count={posts?.length || 0} 
+      <ResultHeader
+        type="search"
+        keyword={keyword}
+        count={posts?.length || 0}
       />
       <LayoutPostList {...props} />
     </div>
@@ -739,22 +739,22 @@ const Layout404 = props => {
       const article = isBrowser && document.getElementById('article-wrapper')
       if (!article) {
         router.push('/').then(() => {
-          // console.log('找不到页面', router.asPath)
+          // 找不到页面自动跳转回首页
         })
       }
     }, 3000)
   }, [])
 
   return <>
-        <div className='md:-mt-20 text-black w-full h-screen text-center justify-center content-center items-center flex flex-col'>
-            <div className='dark:text-gray-200'>
-                <h2 className='inline-block border-r-2 border-gray-600 mr-2 px-3 py-2 align-top'><i className='mr-2 fas fa-spinner animate-spin' />404</h2>
-                <div className='inline-block text-left h-32 leading-10 items-center'>
-                    <h2 className='m-0 p-0'>{locale.NAV.PAGE_NOT_FOUND_REDIRECT}</h2>
-                </div>
-            </div>
+    <div className='md:-mt-20 text-black w-full h-screen text-center justify-center content-center items-center flex flex-col'>
+      <div className='dark:text-gray-200'>
+        <h2 className='inline-block border-r-2 border-gray-600 mr-2 px-3 py-2 align-top'><i className='mr-2 fas fa-spinner animate-spin' />404</h2>
+        <div className='inline-block text-left h-32 leading-10 items-center'>
+          <h2 className='m-0 p-0'>{locale.NAV.PAGE_NOT_FOUND_REDIRECT}</h2>
         </div>
-    </>
+      </div>
+    </div>
+  </>
 }
 
 /**

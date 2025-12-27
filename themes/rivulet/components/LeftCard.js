@@ -182,7 +182,7 @@ const LeftCard = ({
 
   // 页面加载后延迟显示内容，防止初始渲染时的溢出闪烁
   // 使用 layoutReady 状态来控制显示，只有当首次布局计算完成后才显示
-  // const [layoutReady, setLayoutReady] = useState(false) // Moved to top
+
 
   // 为了保险起见，设置一个超时，确保即使计算逻辑有问题也能最终显示
   useEffect(() => {
