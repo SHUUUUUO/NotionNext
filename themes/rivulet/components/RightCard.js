@@ -596,13 +596,17 @@ const RightCard = ({
     return sectionInfoMap[sectionName] || null
   }, [sectionInfoMap])
 
-  const [isLoaded, setIsLoaded] = useState(false)
+  // 页面加载后延迟显示内容，防止初始渲染时的溢出闪烁
+  // 使用 layoutReady 状态来控制显示，只有当首次布局计算完成后才显示
+  const [layoutReady, setLayoutReady] = useState(false)
 
+  // 标记布局准备完成
   useEffect(() => {
-    // 极短延迟，仅用于让浏览器完成首次布局计算
+    // 由于 RightCard 的计算分散在多个 useEffect 中，我们使用一个简单的延时来模拟等待计算完成
+    // 同时也作为兜底机制
     const timer = setTimeout(() => {
-      setIsLoaded(true)
-    }, 50)
+      setLayoutReady(true)
+    }, 100)
     return () => clearTimeout(timer)
   }, [])
 
@@ -610,11 +614,11 @@ const RightCard = ({
     <aside
       ref={cardRef}
       id="sidebar-right-card"
-      className={`hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-500 ease-in-out ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+      className={`hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-500 ease-in-out ${layoutReady ? 'opacity-100' : 'opacity-0'}`}
       style={{
         ...rightCardStyle,
         transform: isCollapsed ? 'translateX(100%)' : 'translateX(0)',
-        opacity: isCollapsed ? 0 : (isLoaded ? 1 : 0),
+        opacity: isCollapsed ? 0 : (layoutReady ? 1 : 0),
         pointerEvents: isCollapsed ? 'none' : 'auto'
       }}>
       {/* 单功能模式下的顶部标题栏 */}
@@ -787,16 +791,16 @@ const RightCard = ({
                         data-is-current={isCurrentPost}>
                         <SmartLink href={postItem.href || `/${postItem.slug}`} passHref legacyBehavior>
                           <div className={`p-3 rounded-lg transition-colors duration-200 cursor-pointer ${isCurrentPost
-                              ? 'bg-gray-600 dark:bg-gray-600 text-white dark:text-white'
-                              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            ? 'bg-gray-600 dark:bg-gray-600 text-white dark:text-white'
+                            : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
                             }`}>
                             <div className={`font-medium text-sm line-clamp-2 text-left flex items-center ${isCurrentPost
-                                ? 'text-white dark:text-white'
-                                : 'text-gray-700 dark:text-gray-200'
+                              ? 'text-white dark:text-white'
+                              : 'text-gray-700 dark:text-gray-200'
                               }`}>
                               <span className={`text-xs mr-2 flex-shrink-0 ${isCurrentPost
-                                  ? 'text-gray-300 dark:text-gray-300'
-                                  : 'text-gray-500 dark:text-gray-400'
+                                ? 'text-gray-300 dark:text-gray-300'
+                                : 'text-gray-500 dark:text-gray-400'
                                 }`}>
                                 {postNumber}.
                               </span>

@@ -150,11 +150,19 @@ const LeftCard = ({
         }
       }
     })
-  }, [notice, cardGapValue, showAnnouncementTitleOnly])
+
+    // 标记布局计算已完成
+    if (!layoutReady) {
+      setLayoutReady(true)
+    }
+  }, [notice, cardGapValue, showAnnouncementTitleOnly, layoutReady])
 
   // 当菜单展开/收起或内容变化时，检查剩余组件能否显示
   useEffect(() => {
     if (!isBrowser) return
+
+    // 立即执行一次检查
+    checkBottomComponentsVisibility()
 
     // 延迟检查，等待菜单展开/收起动画完成
     const timers = [
@@ -172,26 +180,27 @@ const LeftCard = ({
   }, [hasSubMenuOpen, notice, cardGapValue])
 
   // 页面加载后延迟显示内容，防止初始渲染时的溢出闪烁
-  const [isLoaded, setIsLoaded] = useState(false)
+  // 使用 layoutReady 状态来控制显示，只有当首次布局计算完成后才显示
+  const [layoutReady, setLayoutReady] = useState(false)
 
+  // 为了保险起见，设置一个超时，确保即使计算逻辑有问题也能最终显示
   useEffect(() => {
-    // 极短延迟，仅用于让浏览器完成首次布局计算
     const timer = setTimeout(() => {
-      setIsLoaded(true)
-    }, 50)
+      if (!layoutReady) setLayoutReady(true)
+    }, 500)
     return () => clearTimeout(timer)
-  }, [])
+  }, [layoutReady])
 
   return (
     <aside
       ref={cardRef}
       id="sidebar-left-card"
-      className={`hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-500 ease-in-out ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+      className={`hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-500 ease-in-out ${layoutReady ? 'opacity-100' : 'opacity-0'}`}
       style={{
         ...cardStyle,
         transform: isCollapsed ? 'translateX(-100%)' : 'translateX(0)',
         // 叠加 isCollapsed 的透明度控制
-        opacity: isCollapsed ? 0 : (isLoaded ? 1 : 0),
+        opacity: isCollapsed ? 0 : (layoutReady ? 1 : 0),
         pointerEvents: isCollapsed ? 'none' : 'auto'
       }}>
       <div
