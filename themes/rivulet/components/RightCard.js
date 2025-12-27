@@ -37,10 +37,10 @@ const RightCard = ({
 }) => {
   const router = useRouter()
   const { locale } = useGlobal()
-  
+
   // 判断是否为文章页面（如果没有传入 isArticlePage，则根据 post 和路由判断）
-  const isArticlePageValue = isArticlePage !== undefined 
-    ? isArticlePage 
+  const isArticlePageValue = isArticlePage !== undefined
+    ? isArticlePage
     : (post && !router.asPath?.match(/^\/(tag|category|archive|search|page)/))
   const cardRef = useRef(null)
   const contentRef = useRef(null)
@@ -60,14 +60,14 @@ const RightCard = ({
     // 如果当前有分类，初始化为当前分类
     return currentCategory || null
   })
-  
+
   // 根据已选中的标签和分类筛选文章后，计算剩余标签及其数量
   const filteredTagOptions = useMemo(() => {
     // 如果没有选中任何标签和分类，返回原始标签列表
     if ((!selectedTags || selectedTags.length === 0) && !selectedCategory) {
       return baseTagOptions
     }
-    
+
     // 获取筛选后的文章（基于已选中的标签和分类）
     let filteredPosts = []
     if (posts && posts.length > 0) {
@@ -77,14 +77,14 @@ const RightCard = ({
     } else if (otherProps.allPages && Array.isArray(otherProps.allPages)) {
       filteredPosts = otherProps.allPages.filter(page => page.type === 'Post' && page.status === 'Published')
     }
-    
+
     // 根据选中的分类过滤文章
     if (selectedCategory && filteredPosts.length > 0) {
       filteredPosts = filteredPosts.filter(post => {
         return post.category === selectedCategory
       })
     }
-    
+
     // 根据选中的标签过滤文章
     if (selectedTags && selectedTags.length > 0 && filteredPosts.length > 0) {
       filteredPosts = filteredPosts.filter(post => {
@@ -93,7 +93,7 @@ const RightCard = ({
         return selectedTags.every(selectedTag => postTags.includes(selectedTag))
       })
     }
-    
+
     // 从筛选后的文章中提取所有标签，并计算每个标签的数量
     const tagCountMap = new Map()
     filteredPosts.forEach(post => {
@@ -105,7 +105,7 @@ const RightCard = ({
         })
       }
     })
-    
+
     // 创建新的标签列表，包含：
     // 1. 已选中的标签（显示筛选后的数量）
     // 2. 未选中但在筛选后文章中出现的标签
@@ -131,19 +131,19 @@ const RightCard = ({
         // 然后按数量降序排序
         return b.count - a.count
       })
-    
+
     return filteredTags
   }, [baseTagOptions, selectedTags, selectedCategory, posts, otherProps.allPosts, otherProps.allPages])
-  
+
   // 使用筛选后的标签选项
   const finalTagOptions = filteredTagOptions
-  
+
   // 记录用户是否手动修改过分类筛选（避免自动同步覆盖用户选择）
   const userModifiedCategoryRef = useRef(false)
-  
+
   // 记录是否已经初始化过筛选状态（避免重复初始化）
   const hasInitializedRef = useRef(false)
-  
+
   // 当进入文章列表单功能模式时，同步筛选状态
   useEffect(() => {
     if (focusedSection === 'posts' && !hasInitializedRef.current) {
@@ -152,12 +152,12 @@ const RightCard = ({
       if (!userModifiedCategoryRef.current && currentCategory && currentCategory !== selectedCategory) {
         setSelectedCategory(currentCategory)
       }
-      
+
       // 同步标签筛选状态 - 如果 currentTag 存在且不在选中列表中，则添加
       if (currentTag && !selectedTags?.includes(currentTag)) {
         toggleTag(currentTag)
       }
-      
+
       hasInitializedRef.current = true
     } else if (focusedSection !== 'posts') {
       // 离开文章列表单功能模式时，重置初始化标志
@@ -170,7 +170,7 @@ const RightCard = ({
       }
     }
   }, [focusedSection, currentCategory, currentTag, selectedCategory, selectedTags, toggleTag])
-  
+
   // 当 currentCategory 变化时，如果用户没有手动修改过，则同步分类筛选状态
   useEffect(() => {
     if (focusedSection === 'posts' && !userModifiedCategoryRef.current) {
@@ -190,14 +190,14 @@ const RightCard = ({
       }
     }
   }, [currentCategory, focusedSection, selectedCategory])
-  
+
   // 同步标签筛选状态 - 当 currentTag 变化且正在文章列表模式时
   useEffect(() => {
     if (focusedSection === 'posts' && currentTag && !selectedTags?.includes(currentTag)) {
       toggleTag(currentTag)
     }
   }, [currentTag, focusedSection, selectedTags, toggleTag])
-  
+
   const finalPosts = useMemo(() => {
     let allPosts = []
     if (posts && posts.length > 0) {
@@ -209,14 +209,14 @@ const RightCard = ({
       // 如果没有 allPosts，尝试从 allPages 中提取
       allPosts = otherProps.allPages.filter(page => page.type === 'Post' && page.status === 'Published')
     }
-    
+
     // 根据选中的分类过滤文章
     if (selectedCategory && allPosts.length > 0) {
       allPosts = allPosts.filter(post => {
         return post.category === selectedCategory
       })
     }
-    
+
     // 根据选中的标签过滤文章
     if (selectedTags && selectedTags.length > 0 && allPosts.length > 0) {
       allPosts = allPosts.filter(post => {
@@ -225,26 +225,26 @@ const RightCard = ({
         return selectedTags.every(selectedTag => postTags.includes(selectedTag))
       })
     }
-    
+
     return allPosts
   }, [posts, otherProps.allPosts, otherProps.allPages, selectedTags, selectedCategory])
-  
+
   // 计算基于筛选后的文章列表的 prev 和 next，并暴露到全局
   useEffect(() => {
     if (typeof window !== 'undefined' && post && finalPosts && finalPosts.length > 0) {
       const currentIndex = finalPosts.findIndex(p => p.slug === post.slug || p.id === post.id)
       if (currentIndex !== -1) {
-        const filteredPrev = currentIndex > 0 
-          ? finalPosts[currentIndex - 1] 
+        const filteredPrev = currentIndex > 0
+          ? finalPosts[currentIndex - 1]
           : (finalPosts.length > 1 ? finalPosts[finalPosts.length - 1] : null)
-        const filteredNext = currentIndex < finalPosts.length - 1 
-          ? finalPosts[currentIndex + 1] 
+        const filteredNext = currentIndex < finalPosts.length - 1
+          ? finalPosts[currentIndex + 1]
           : (finalPosts.length > 1 ? finalPosts[0] : null)
-        
+
         // 暴露到全局，供 ArticleDetail 使用
         window.__filteredPrevPost = filteredPrev
         window.__filteredNextPost = filteredNext
-        
+
         // 触发自定义事件，通知 ArticleDetail 更新
         if (typeof window !== 'undefined' && window.dispatchEvent) {
           window.dispatchEvent(new CustomEvent('filteredPostsUpdated'))
@@ -265,7 +265,7 @@ const RightCard = ({
         window.dispatchEvent(new CustomEvent('filteredPostsUpdated'))
       }
     }
-    
+
     // 清理函数：组件卸载时清除
     return () => {
       if (typeof window !== 'undefined') {
@@ -274,7 +274,7 @@ const RightCard = ({
       }
     }
   }, [post, finalPosts])
-  
+
   // 处理分类变化 - 使用 useCallback 优化
   const handleCategoryChange = useCallback((categoryName) => {
     setSelectedCategory(categoryName)
@@ -286,7 +286,7 @@ const RightCard = ({
       userModifiedCategoryRef.current = true
     }
   }, [])
-  
+
   // 将选中的分类暴露到全局，供 BlogListPage 和 BlogListScroll 使用
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -306,31 +306,31 @@ const RightCard = ({
       }
     }
   }, [selectedCategory])
-  
+
   // 滚动到当前文章并居中显示 - 使用 useCallback 优化
   const scrollToCurrentPost = useCallback((element) => {
     if (!element || typeof window === 'undefined') return
-    
+
     const container = document.getElementById('posts-list-container')
     if (!container) return
-    
+
     // 使用 requestAnimationFrame 确保 DOM 已更新
     requestAnimationFrame(() => {
       const containerRect = container.getBoundingClientRect()
       const elementRect = element.getBoundingClientRect()
-      
+
       // 计算元素相对于容器的位置
       const elementTop = elementRect.top - containerRect.top + container.scrollTop
       const elementHeight = elementRect.height
       const containerHeight = containerRect.height
-      
+
       // 计算居中位置：元素顶部 - (容器高度 - 元素高度) / 2
       const targetScrollTop = elementTop - (containerHeight - elementHeight) / 2
-      
+
       // 确保滚动位置在有效范围内
       const maxScrollTop = container.scrollHeight - containerHeight
       const finalScrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop))
-      
+
       // 平滑滚动到目标位置
       container.scrollTo({
         top: finalScrollTop,
@@ -338,7 +338,7 @@ const RightCard = ({
       })
     })
   }, [])
-  
+
   // 当文章列表或当前文章变化时，滚动到当前文章
   useEffect(() => {
     if (focusedSection === 'posts' && post && finalPosts && finalPosts.length > 0) {
@@ -349,7 +349,7 @@ const RightCard = ({
           scrollToCurrentPost(currentPostElement)
         }
       }, 200)
-      
+
       return () => clearTimeout(timer)
     }
   }, [focusedSection, post, finalPosts])
@@ -359,7 +359,7 @@ const RightCard = ({
   const cardWidth = '240px'
   const cardTop = cardGapValue
   const cardBottomGap = '68px' // 卡片下边缘与屏幕下边缘的最小间距
-  
+
   const rightCardStyle = {
     top: cardTop,
     width: cardWidth,
@@ -463,7 +463,7 @@ const RightCard = ({
       // 获取目录下方所有内容的高度
       let otherContentHeight = 0
       const catalogSectionRect = catalogSection.getBoundingClientRect()
-      
+
       // 获取目录标题的高度（如果存在）
       const catalogTitle = catalogSection.querySelector('div[class*="cursor-pointer"]')
       const catalogTitleHeight = catalogTitle ? catalogTitle.getBoundingClientRect().height + 12 : 0 // 12px 是 mb-3 的间距
@@ -485,10 +485,10 @@ const RightCard = ({
       // 计算目录可用的最大高度
       // 卡片高度 - 上下padding - 目录标题高度 - 目录下方内容高度 - 一些余量（10px）
       const availableHeight = cardHeight - paddingTop - paddingBottom - catalogTitleHeight - otherContentHeight - 10
-      
+
       // 在单功能模式下，移除最大高度限制，允许显示更长
       const isFocusedMode = focusedSection === 'catalog'
-      const maxHeight = isFocusedMode 
+      const maxHeight = isFocusedMode
         ? Math.max(200, availableHeight) // 单功能模式：只设置最小值，不限制最大值
         : Math.max(200, Math.min(availableHeight, 600)) // 正常模式：最小200px，最大600px
 
@@ -596,15 +596,25 @@ const RightCard = ({
     return sectionInfoMap[sectionName] || null
   }, [sectionInfoMap])
 
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
+    // 极短延迟，仅用于让浏览器完成首次布局计算
+    const timer = setTimeout(() => {
+      setIsLoaded(true)
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
     <aside
       ref={cardRef}
       id="sidebar-right-card"
-      className="hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-300 ease-in-out"
+      className={`hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-500 ease-in-out ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
       style={{
         ...rightCardStyle,
         transform: isCollapsed ? 'translateX(100%)' : 'translateX(0)',
-        opacity: isCollapsed ? 0 : 1,
+        opacity: isCollapsed ? 0 : (isLoaded ? 1 : 0),
         pointerEvents: isCollapsed ? 'none' : 'auto'
       }}>
       {/* 单功能模式下的顶部标题栏 */}
@@ -625,25 +635,25 @@ const RightCard = ({
         </div>
       )}
 
-      <div 
-        ref={contentRef} 
+      <div
+        ref={contentRef}
         className={`p-6 flex flex-col items-center text-center ${focusedSection ? 'pt-20 flex-1 min-h-0' : 'space-y-3 overflow-y-auto'}`}
-        style={focusedSection ? { 
+        style={focusedSection ? {
           height: '100%',
           display: 'flex',
           flexDirection: 'column'
         } : (contentMaxHeight ? { maxHeight: `${contentMaxHeight}px` } : { maxHeight: 'none' })}>
         {/* 目录 - 仅在文章详情页显示，放在最上方 */}
         {post && post.toc && post.toc.length > 0 && (!focusedSection || focusedSection === 'catalog') && (
-          <section 
-            ref={catalogSectionRef} 
+          <section
+            ref={catalogSectionRef}
             className='flex flex-col items-center w-full flex-shrink-0'
-            style={{ 
+            style={{
               maxHeight: `${catalogMaxHeight}px`,
               overflow: 'hidden'
             }}>
             {!focusedSection && (
-              <div 
+              <div
                 className='w-full dark:text-gray-300 mb-3 text-center flex justify-center items-center cursor-pointer flex-shrink-0'
                 onClick={() => handleSectionTitleClick('catalog')}>
                 <div className='relative inline-flex items-center group'>
@@ -663,7 +673,7 @@ const RightCard = ({
         {isArticlePageValue && finalPosts && finalPosts.length > 0 && (!focusedSection || focusedSection === 'posts') && (
           <section className={`flex flex-col items-center w-full ${post && post.toc && post.toc.length > 0 ? 'pt-3 border-t border-gray-200 dark:border-gray-700' : ''} ${!focusedSection ? 'pb-0' : ''}`}>
             {!focusedSection && (
-              <div 
+              <div
                 className='w-full dark:text-gray-300 mb-1 text-center flex justify-center items-center cursor-pointer'
                 onClick={() => handleSectionTitleClick('posts')}>
                 <div className='relative inline-flex items-center group'>
@@ -680,11 +690,11 @@ const RightCard = ({
         {!focusedSection && (
           <section className={`flex flex-col items-center w-full ${
             // 如果有目录但没有文章列表标题，显示上边框
-            post && post.toc && post.toc.length > 0 && (!isArticlePageValue || !finalPosts || finalPosts.length === 0) 
-              ? 'pt-3 border-t border-gray-200 dark:border-gray-700' 
+            post && post.toc && post.toc.length > 0 && (!isArticlePageValue || !finalPosts || finalPosts.length === 0)
+              ? 'pt-3 border-t border-gray-200 dark:border-gray-700'
               // 如果有文章列表标题，不显示上边框和上边距
               : ''
-          }`}>
+            }`}>
             <SearchInput {...otherProps} />
           </section>
         )}
@@ -693,7 +703,7 @@ const RightCard = ({
         {router.asPath !== '/tag' && finalTagOptions && finalTagOptions.length > 0 && (!focusedSection || focusedSection === 'tags') && (
           <section className={`flex flex-col items-center w-full ${!focusedSection ? 'pt-3 border-t border-gray-200 dark:border-gray-700' : ''}`}>
             {!focusedSection && (
-              <div 
+              <div
                 className='w-full dark:text-gray-300 mb-3 text-center flex justify-center items-center cursor-pointer'
                 onClick={() => handleSectionTitleClick('tags')}>
                 <div className='relative inline-flex items-center group'>
@@ -713,7 +723,7 @@ const RightCard = ({
         {router.asPath !== '/category' && categoryOptions && categoryOptions.length > 0 && (!focusedSection || focusedSection === 'category') && (
           <section className={`flex flex-col items-center w-full ${!focusedSection ? 'pt-3 border-t border-gray-200 dark:border-gray-700' : ''}`}>
             {!focusedSection && (
-              <div 
+              <div
                 className='w-full dark:text-gray-300 mb-3 text-center flex justify-center items-center cursor-pointer'
                 onClick={() => handleSectionTitleClick('category')}>
                 <div className='relative inline-flex items-center group'>
@@ -738,7 +748,7 @@ const RightCard = ({
         {focusedSection === 'posts' && isArticlePageValue && (
           <section className='flex flex-col items-center w-full flex-1 min-h-0'>
             {/* 筛选面板 - 可折叠 */}
-            <PostListFilter 
+            <PostListFilter
               categoryOptions={categoryOptions}
               currentCategory={currentCategory}
               tagOptions={finalTagOptions}
@@ -746,12 +756,12 @@ const RightCard = ({
               selectedCategory={selectedCategory}
               onCategoryChange={handleCategoryChange}
             />
-            
+
             {/* 文章列表 */}
-            <div 
+            <div
               id='posts-list-container'
               className='w-full space-y-3 overflow-y-auto flex-1 pr-1'
-              style={{ 
+              style={{
                 paddingBottom: '0',
                 paddingRight: '0.25rem'
               }}>
@@ -761,36 +771,33 @@ const RightCard = ({
                     // 判断是否为当前文章
                     // 只在客户端使用 router.asPath，避免服务器端和客户端不一致
                     const isCurrentPost = post && (
-                      postItem.slug === post.slug || 
+                      postItem.slug === post.slug ||
                       postItem.id === post.id ||
                       (postItem.href && post.href && postItem.href === post.href) ||
                       (typeof window !== 'undefined' && router.asPath && postItem.href && router.asPath === postItem.href) ||
                       (typeof window !== 'undefined' && router.asPath && !postItem.href && router.asPath === `/${postItem.slug}`)
                     )
                     const postNumber = index + 1 // 序号从1开始
-                    
+
                     return (
-                      <div 
-                        key={postItem.id || postItem.slug} 
+                      <div
+                        key={postItem.id || postItem.slug}
                         className='w-full'
                         data-post-slug={postItem.slug}
                         data-is-current={isCurrentPost}>
                         <SmartLink href={postItem.href || `/${postItem.slug}`} passHref legacyBehavior>
-                          <div className={`p-3 rounded-lg transition-colors duration-200 cursor-pointer ${
-                            isCurrentPost 
-                              ? 'bg-gray-600 dark:bg-gray-600 text-white dark:text-white' 
+                          <div className={`p-3 rounded-lg transition-colors duration-200 cursor-pointer ${isCurrentPost
+                              ? 'bg-gray-600 dark:bg-gray-600 text-white dark:text-white'
                               : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-                          }`}>
-                            <div className={`font-medium text-sm line-clamp-2 text-left flex items-center ${
-                              isCurrentPost 
-                                ? 'text-white dark:text-white' 
-                                : 'text-gray-700 dark:text-gray-200'
                             }`}>
-                              <span className={`text-xs mr-2 flex-shrink-0 ${
-                                isCurrentPost 
-                                  ? 'text-gray-300 dark:text-gray-300' 
-                                  : 'text-gray-500 dark:text-gray-400'
+                            <div className={`font-medium text-sm line-clamp-2 text-left flex items-center ${isCurrentPost
+                                ? 'text-white dark:text-white'
+                                : 'text-gray-700 dark:text-gray-200'
                               }`}>
+                              <span className={`text-xs mr-2 flex-shrink-0 ${isCurrentPost
+                                  ? 'text-gray-300 dark:text-gray-300'
+                                  : 'text-gray-500 dark:text-gray-400'
+                                }`}>
                                 {postNumber}.
                               </span>
                               {isCurrentPost && <i className='fas fa-circle text-[6px] mr-2 align-middle'></i>}

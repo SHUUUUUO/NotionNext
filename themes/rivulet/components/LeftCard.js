@@ -171,15 +171,27 @@ const LeftCard = ({
     }
   }, [hasSubMenuOpen, notice, cardGapValue])
 
+  // 页面加载后延迟显示内容，防止初始渲染时的溢出闪烁
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
+    // 极短延迟，仅用于让浏览器完成首次布局计算
+    const timer = setTimeout(() => {
+      setIsLoaded(true)
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
     <aside
       ref={cardRef}
       id="sidebar-left-card"
-      className="hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-300 ease-in-out"
+      className={`hidden md:block fixed bg-white dark:bg-hexo-black-gray rounded-lg z-20 transition-all duration-500 ease-in-out ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
       style={{
         ...cardStyle,
         transform: isCollapsed ? 'translateX(-100%)' : 'translateX(0)',
-        opacity: isCollapsed ? 0 : 1,
+        // 叠加 isCollapsed 的透明度控制
+        opacity: isCollapsed ? 0 : (isLoaded ? 1 : 0),
         pointerEvents: isCollapsed ? 'none' : 'auto'
       }}>
       <div
